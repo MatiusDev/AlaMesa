@@ -13,6 +13,7 @@ _FORMAT_RESTAURANT_DETAIL = """
   **Esquema JSON a seguir:**
   ```json
   {
+<<<<<<< HEAD
     "name": "string | null",
     "restaurant_type": ["string"],
     "price_range": "string (ej. '25000 - 90000') | null",
@@ -45,3 +46,40 @@ _FORMAT_RESTAURANT_DETAIL = """
 PROMPTS = {
   "FORMAT_RESTAURANT_DETAIL": _FORMAT_RESTAURANT_DETAIL
 }
+=======
+    "name": "string",
+    "restaurant_type": "string",
+    "price_range": "string (ej. '$$$$')",
+    "rating": "float (ej. 4.2)",
+    "reviews_count": "integer (ej. 18)",
+    "address": "string",
+    "contact": {
+      "phone": "string",
+      "email": "string | null",
+      "website": "string | null"
+    },
+    "hours": {
+      "lunes": "string",
+      "martes": "string",
+      "miércoles": "string",
+      "jueves": "string",
+      "viernes": "string",
+      "sábado": "string",
+      "domingo": "string"
+    },
+    "menu": {
+      "nombre_de_la_categoria": [
+        {
+          "plate_name": "string",
+          "description": "string | null",
+          "price": "float | null"
+        }
+      ]
+    },
+    "features": [
+      "string"
+    ]
+  }
+  ```
+"""
+>>>>>>> a345c43 (NEW: Adding backend structure implementing scraping with openai analysis)
