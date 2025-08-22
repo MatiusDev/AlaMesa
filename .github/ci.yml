@@ -1,0 +1,19 @@
+name: CI Checks for Development
+
+on:
+  push:
+    branches: [ development ]
+    
+  pull_request:
+    branches: [ development ]
+
+jobs:
+  build:
+    name: Run Build Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: A simple success check
+        run: echo "Status check ran successfully!"
