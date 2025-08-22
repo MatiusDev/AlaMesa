@@ -5,7 +5,6 @@ import os
 from fastapi import Depends
 from typing import Annotated
 
-<<<<<<< HEAD
 from core.utils.constants.prompts import PROMPTS
 
 _openai_client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -20,23 +19,6 @@ class AgentAIService:
           { "role": "system", "content": PROMPTS["FORMAT_RESTAURANT_DETAIL"]},
           {"role": "user", "content": text_content}
         ])
-=======
-from core.utils.constants.prompts import FORMAT_RESTAURANT_DETAIL
-
-class AgentAIService:
-  def __init__(self):
-    self.client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    
-  async def format_to_json(self, text_content: str):
-    try:
-      response = await self.client.chat.completions.create(
-      model="gpt-4-turbo", # O "gpt-o4"
-      response_format={"type": "json_object"},
-      messages=[
-        { "role": "system", "content": FORMAT_RESTAURANT_DETAIL},
-        {"role": "user", "content": text_content}
-      ])
->>>>>>> a345c43 (NEW: Adding backend structure implementing scraping with openai analysis)
       token_usage = response.usage
       
       # Imprimir los detalles en la consola
