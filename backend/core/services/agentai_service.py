@@ -14,12 +14,12 @@ class AgentAIService:
   async def format_to_json(self, text_content: str):
     try:
       response = await self.client.chat.completions.create(
-      model="gpt-4-turbo", # O "gpt-o4"
-      response_format={"type": "json_object"},
-      messages=[
-        { "role": "system", "content": FORMAT_RESTAURANT_DETAIL},
-        {"role": "user", "content": text_content}
-      ])
+        model="gpt-5-nano", # gpt-o4
+        response_format={"type": "json_object"},
+        messages=[
+          { "role": "system", "content": FORMAT_RESTAURANT_DETAIL},
+          {"role": "user", "content": text_content}
+        ])
       token_usage = response.usage
       
       # Imprimir los detalles en la consola
