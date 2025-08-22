@@ -1,6 +1,11 @@
-name: CI Checks
+name: CI Checks for Development
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ development ]
+    
+  pull_request:
+    branches: [ development ]
 
 jobs:
   build:
