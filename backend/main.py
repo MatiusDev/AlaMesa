@@ -4,9 +4,9 @@ import uvicorn
 from fastapi import FastAPI
 from dotenv import load_dotenv
 
-from core.router import routes as api_routes
-
 load_dotenv()
+
+from core.router import routes as api_routes
 
 app = FastAPI()
 

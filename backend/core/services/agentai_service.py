@@ -5,19 +5,18 @@ import os
 from fastapi import Depends
 from typing import Annotated
 
-from core.utils.constants.prompts import FORMAT_RESTAURANT_DETAIL
+from core.utils.constants.prompts import PROMPTS
+
+_openai_client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class AgentAIService:
-  def __init__(self):
-    self.client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    
   async def format_to_json(self, text_content: str):
     try:
-      response = await self.client.chat.completions.create(
+      response = await _openai_client.chat.completions.create(
         model="gpt-5-nano",
         response_format={"type": "json_object"},
         messages=[
-          { "role": "system", "content": FORMAT_RESTAURANT_DETAIL},
+          { "role": "system", "content": PROMPTS["FORMAT_RESTAURANT_DETAIL"]},
           {"role": "user", "content": text_content}
         ])
       token_usage = response.usage

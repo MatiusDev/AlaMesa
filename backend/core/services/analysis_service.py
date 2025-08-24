@@ -25,8 +25,15 @@ class AnalysisService:
       print(f"Analizando el primer restaurante: {restaurant_url}")
       
       details = await scraper.get_links_detail(restaurant_url)
+      
+      if not details:
+        raise HTTPException(status_code=404, detail="No se encontraron detalles para el restaurante.")
 
       structured_data = await self.ai_service.format_to_json(details['detail_text'])
+      
+      if not structured_data:
+        raise HTTPException(status_code=500, detail="El modelo no pudo procesar la información.")
+      
       return {
         "restaurant_data": structured_data,
         "image_urls": details['image_urls']

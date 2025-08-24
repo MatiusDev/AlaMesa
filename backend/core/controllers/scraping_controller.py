@@ -1,9 +1,7 @@
 from fastapi import APIRouter, HTTPException, Path
 
-# ¡LA MAGIA ESTÁ AQUÍ! Importamos la dependencia desde la nueva fábrica
 from core.services.scrapers.factory import SScrapingService 
 from core.services.analysis_service import SAnalysisService
-
 
 route = APIRouter()
 
