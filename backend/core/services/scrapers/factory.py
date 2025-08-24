@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 from typing import Annotated, Dict,Type
+=======
+from typing import Annotated
+>>>>>>> 0d7cae4 (NEW: Adding factory pattern on scraping services behavior)
 
 from fastapi import Depends, Request, HTTPException
 
 from .interface import ScrapingInterface
 from .tripadvisor import TripAdvisorScraper
+<<<<<<< HEAD
 from core.utils.constants.scrapers_config import SCRAPER_CONFIGS
 
 # Mapeo de sitios a clases de scraper para hacerlo escalable
@@ -30,6 +35,19 @@ def get_scraper_service(site: str, request: Request) -> ScrapingInterface:
   
   scraper_class = SCRAPER_MAPPING[site]
   return scraper_class(request)
+=======
+
+def get_scraper_service(site: str, request: Request) -> ScrapingInterface:
+  """
+  Fabrica de dependencias.
+  Permite crear una instancia del scraper correcto para el sitio especificado.
+  FastAPI llamará al scraper que cumpla con 'site' y implemente 'ScrapingInterface'.
+  """
+  if site == "tripadvisor":
+    return TripAdvisorScraper(request)
+  
+  raise HTTPException(status_code=404, detail=f"Sitio de scraping '{site}' no soportado.")
+>>>>>>> 0d7cae4 (NEW: Adding factory pattern on scraping services behavior)
 
 # Creamos un tipo anotado para inyectar en los controladores, le dice a FastAPI que debe usar get_scraper_service como su proveedor del servicio
 SScrapingService = Annotated[ScrapingInterface, Depends(get_scraper_service)]
