@@ -14,6 +14,8 @@ from core.router import routes as api_routes
 from core.database.connection import init_db
 from core.database.mongodb_driver import init_mongodb
 
+from core.router import routes as api_routes
+
 app = FastAPI()
 
 # Configurar CORS
