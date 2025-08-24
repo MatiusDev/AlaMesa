@@ -14,7 +14,7 @@ class AgentAIService:
   async def format_to_json(self, text_content: str):
     try:
       response = await self.client.chat.completions.create(
-        model="gpt-5-nano", # gpt-o4
+        model="gpt-5-nano",
         response_format={"type": "json_object"},
         messages=[
           { "role": "system", "content": FORMAT_RESTAURANT_DETAIL},

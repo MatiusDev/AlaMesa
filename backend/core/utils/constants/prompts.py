@@ -29,15 +29,7 @@ FORMAT_RESTAURANT_DETAIL = """
       "sábado": "string",
       "domingo": "string"
     },
-    "menu": {
-      "nombre_de_la_categoria": [
-        {
-          "plate_name": "string",
-          "description": "string | null",
-          "price": "float | null"
-        }
-      ]
-    },
+    "menu": "string (url) | null",
     "features": [
       "string"
     ]
