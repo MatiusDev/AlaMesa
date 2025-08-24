@@ -12,6 +12,8 @@ load_dotenv(dotenv_path=env_path)
 from core.router import routes as api_routes
 from core.database.connection import init_db
 
+from core.router import routes as api_routes
+
 app = FastAPI()
 
 @app.on_event("startup")
