@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/alamesa_db
+      POSTGRES_HOST: postgresql
+      POSTGRES_DB: alamesa_db
+      POSTGRES_USER: alamesa_user
+      POSTGRES_PASSWORD: alamesa_password
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8000
+    depends_on:
+      - mongodb
+      - postgresql
+    volumes:
+      - ./backend:/app
+    
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: alamesa_user
+      MONGO_INITDB_ROOT_PASSWORD: alamesa_password
+  
+  postgresql:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: alamesa_db
+      POSTGRES_USER: alamesa_user
+      POSTGRES_PASSWORD: alamesa_password
+  
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
+  postgresql_data:
