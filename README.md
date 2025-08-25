@@ -67,6 +67,42 @@ docker compose down
 docker compose down -v
     ```
 
+### Updating Code Changes
+
+When you make changes to the project's code, you'll need to update the running Docker containers to reflect these changes. The process varies slightly depending on what you've changed:
+
+*   **Backend Code Changes (Python files in `backend/`)**:
+    *   Simply save your Python files. The backend is configured with hot-reloading (Uvicorn watches for file changes due to volume mounts and `reload=True` in `main.py`), so the application will automatically restart inside the container. No `docker compose` commands are typically needed.
+
+*   **Frontend Code Changes (JavaScript/CSS/HTML in `frontend/`)**:
+    *   Your current frontend setup serves static files built into the Docker image. To see changes, you need to rebuild the frontend image and restart its container:
+        ```bash
+        docker compose build frontend # Rebuilds only the frontend image
+        docker compose up -d frontend # Restarts only the frontend service
+        ```
+    *   *(Note: For a development workflow with instant hot-module-replacement (HMR) for the frontend, you would need to modify the `frontend` service in `docker-compose.yml` to run Vite's development server with volume mounts, instead of Nginx. This is a more advanced setup for dedicated frontend development environments.)*
+
+*   **Dependency Changes (`backend/requirements.txt` or `frontend/package.json`/`package-lock.json`)**:
+    *   If you add, remove, or update dependencies, you must rebuild the respective service's image to install the new dependencies:
+        ```bash
+        docker compose build <service_name> # e.g., backend or frontend
+        docker compose up -d <service_name> # Restart the service
+        ```
+
+*   **Dockerfile Changes (in `backend/Dockerfile` or `frontend/Dockerfile`)**:
+    *   Any changes to a `Dockerfile` require a rebuild of that service's image:
+        ```bash
+        docker compose build <service_name>
+        docker compose up -d <service_name>
+        ```
+
+*   **`docker-compose.yml` Changes**:
+    *   If you modify the `docker-compose.yml` file itself (e.g., adding a new service, changing port mappings, updating environment variables), you should run:
+        ```bash
+        docker compose up -d
+        ```
+        This command will re-read the configuration and recreate/update services as needed.
+
 ### Important Note for Developers
 
 The Docker images (`alamesa-backend` and `alamesa-frontend`) contain the *built* versions of the applications, not the raw source code. When another developer clones this repository, they get the source code, `Dockerfile`s, and `docker-compose.yml`. The `docker compose up --build -d` command will then build the application within the Docker containers, ensuring a consistent development environment.
