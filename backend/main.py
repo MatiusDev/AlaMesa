@@ -16,8 +16,6 @@ from core.router import routes as api_routes
 
 from core.router import routes as api_routes
 
-from core.router import routes as api_routes
-
 app = FastAPI()
 
 @app.on_event("startup")
