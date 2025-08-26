@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from core.controllers.scraping_controller import route as scrapingRouter
 from core.controllers.restaurant_controller import router as restaurantRouter
 from core.controllers.owner_controller import router as ownerRouter
 from core.controllers.diner_controller import router as dinerRouter
