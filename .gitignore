@@ -1,12 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
-<<<<<<< HEAD
 ### Docker ###
 docker-compose.override.yml
 
-=======
->>>>>>> baea3f3 (INIT: Creating backend scraping challenges and adding initial configs)
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
