@@ -1,10 +1,13 @@
 import os
 import uvicorn
+from pathlib import Path
 
 from fastapi import FastAPI
 from dotenv import load_dotenv
 
-load_dotenv()
+# Cargar variables de entorno desde el .env en la raíz del proyecto
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 from core.router import routes as api_routes
 
@@ -13,10 +16,10 @@ app = FastAPI()
 app.include_router(api_routes, prefix="/api")
 
 def run():
-    ENVIRONTMENT = os.getenv("ENVIRONTMENT", "dev")
+    ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
     SERVER_PORT = int(os.getenv("SERVER_PORT", 8000))
     
-    if ENVIRONTMENT == "dev":
+    if ENVIRONMENT == "dev":
         SERVER_HOST = os.getenv("SERVER_HOST", "localhost")
         reload = True
         log_level = "debug"
