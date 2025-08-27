@@ -1,13 +1,6 @@
 import httpx
 import asyncio
-<<<<<<< HEAD
 import json
-=======
-import re
-import json
-import base64
-import urllib.parse
->>>>>>> 0d7cae4 (NEW: Adding factory pattern on scraping services behavior)
 
 from typing import Dict, List, Any
 
@@ -51,7 +44,7 @@ class TripAdvisorScraper(ScrapingInterface):
             if full_url not in restaurant_links:
               restaurant_links.append(full_url)
                 
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
       except httpx.RequestError as e:
         print(f"Error de scraping en TripAdvisor (offset={offset}: {str(e)}")
         continue
@@ -108,6 +101,6 @@ class TripAdvisorScraper(ScrapingInterface):
     except httpx.RequestError as e:
       raise Exception(f"Error de scraping de detalle para {detail_url}: {str(e)}")
     finally:
-      await asyncio.sleep(2)
+      await asyncio.sleep(1)
 
   

@@ -34,11 +34,13 @@ class ScrapingService:
         soup = BeautifulSoup(response.content, 'html.parser')
         
         main_container = soup.find('div', attrs={'data-automation': 'LeftRailMain'})
+
         if not main_container:
           print(f"  -> No se encontró el contenedor principal en la página con offset={offset}. Saltando...")
           continue
 
         restaurant_list = main_container.select(':scope > div > div > div')
+
         if not restaurant_list:
           print(f"  -> No se encontraron restaurantes en la página con offset={offset}. Saltando...")
           continue
@@ -50,6 +52,7 @@ class ScrapingService:
           if url and "review" in url.lower():
             if url.startswith('/'):
               full_url = f"https://www.tripadvisor.co{url}"
+              
               if full_url not in restaurant_links:
                 restaurant_links.append(full_url)
         
