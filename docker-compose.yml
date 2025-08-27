@@ -37,7 +37,7 @@ services:
       - postgresql_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: alamesa_db
-      POSTGRES_USER: alamesa_user
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: alamesa_password
   
   frontend:
