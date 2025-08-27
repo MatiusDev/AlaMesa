@@ -1,0 +1,8 @@
+services:
+  backend:
+    command: python main.py
+    volumes:
+      - ./backend:/app
+    environment:
+      # Variable específica de desarrollo
+      ENVIRONMENT: dev
