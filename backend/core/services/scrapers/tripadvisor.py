@@ -1,6 +1,13 @@
 import httpx
 import asyncio
+<<<<<<< HEAD
 import json
+=======
+import re
+import json
+import base64
+import urllib.parse
+>>>>>>> 0d7cae4 (NEW: Adding factory pattern on scraping services behavior)
 
 from typing import Dict, List, Any
 

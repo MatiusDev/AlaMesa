@@ -11,8 +11,6 @@ load_dotenv(dotenv_path=env_path)
 
 from core.router import routes as api_routes
 
-from core.router import routes as api_routes
-
 app = FastAPI()
 
 app.include_router(api_routes, prefix="/api")
