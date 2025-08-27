@@ -29,7 +29,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/alamesa-backend:latest
+          tags: ghcr.io/${{ tolower(github.repository) }}/alamesa-backend:latest
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v4
@@ -37,7 +37,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/alamesa-frontend:latest
+          tags: ghcr.io/${{ tolower(github.repository) }}/alamesa-frontend:latest
 
 #  deploy:
 #    name: Deploy to VPS
