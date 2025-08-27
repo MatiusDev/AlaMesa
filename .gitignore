@@ -176,7 +176,6 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
-<<<<<<< HEAD
 ### JavaScript ###
 # Logs
 logs
@@ -259,8 +258,3 @@ web_modules/
 # Vite
 /frontend/dist
 /frontend/dist-ssr
-=======
-# End of https://www.toptal.com/developers/gitignore/api/python
-
-frontend/
->>>>>>> baea3f3 (INIT: Creating backend scraping challenges and adding initial configs)
