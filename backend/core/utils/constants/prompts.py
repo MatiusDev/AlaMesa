@@ -22,20 +22,18 @@ _FORMAT_RESTAURANT_DETAIL = """
       "full_address": "string | null",
       "street": "string | null",
       "city": "string | null",
-      "state": "string | null",
-      "postal_code": "string | null"
+      "state": "string | null"
     },
     "contact": {
       "phone": "string | null",
       "email": "string | null",
       "website": "string | null"
     },
-    "hours": [
+    "schedules": [
       {
-        "days": ["string (ej. 'Lunes', 'Martes')"],
+        "day": "string (ej. 'Lunes', 'Martes')",
         "open": "string (ej. '12:00') | null",
-        "close": "string (ej. '22:00') | null",
-        "status": "string (ej. 'Abierto', 'Cerrado') | null"
+        "close": "string (ej. '22:00') | null"
       }
     ],
     "menu": "string (url) | null",
