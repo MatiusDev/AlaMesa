@@ -23,13 +23,17 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Convert repository name to lowercase
+        id: string
+        run: echo "repository_lowercase=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Build and push backend image
         uses: docker/build-push-action@v4
         with:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ghcr.io/${{ toLower(github.repository) }}/alamesa-backend:latest
+          tags: ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-backend:latest
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v4
@@ -37,7 +41,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ghcr.io/${{ toLower(github.repository) }}/alamesa-frontend:latest
+          tags: ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:latest
 
 #  deploy:
 #    name: Deploy to VPS
