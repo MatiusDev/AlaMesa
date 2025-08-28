@@ -1,4 +1,5 @@
-import { RestaurantCard, CategoryCard } from '@components/ui/Cards.js';
+import RestaurantCard from '@components/ui/RestaurantCard.js';
+import CategoryCard from '@components/ui/CategoryCard.js';
 
 const Home = () => {
   const state = {};
@@ -25,18 +26,6 @@ const Home = () => {
         <img src="/assets/AlaMesa.jpeg" alt="AlaMesa" class="mx-auto h-12 w-auto rounded-full shadow-soft" />
         <h1 class="mt-6 text-4xl font-bold tracking-tight">Reserva tu mesa con estilo</h1>
         <p class="mt-2 text-neutral-600">Explora restaurantes, descubre experiencias y reserva en segundos.</p>
-      </div>
-
-      <div class="mt-8 w-full rounded-[var(--am-radius)] bg-white/80 backdrop-blur shadow-soft border border-neutral-200/60">
-        <form class="grid grid-cols-1 md:grid-cols-5 gap-2 p-2">
-          <div class="md:col-span-2 flex items-center gap-2 rounded-full px-4 py-2 bg-white">
-            <i class="fa-solid fa-magnifying-glass text-am-600"></i>
-            <input class="w-full bg-transparent placeholder-neutral-400 focus:outline-none" placeholder="¿Dónde quieres comer?" />
-          </div>
-          <input class="rounded-full px-4 py-2 bg-white placeholder-neutral-400 focus:outline-none" placeholder="Tipo de comida" />
-          <input type="date" class="rounded-full px-4 py-2 bg-white placeholder-neutral-400 focus:outline-none" />
-          <button class="rounded-full px-5 py-2 bg-am-600 hover:bg-am-700 text-white font-medium">Buscar</button>
-        </form>
       </div>
 
       <div class="mt-10">
