@@ -20,7 +20,7 @@ class ReviewRead(BaseModel):
     comment: Optional[str] = None
     review_date: date
     created_at: Optional[datetime] = None
-    update_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

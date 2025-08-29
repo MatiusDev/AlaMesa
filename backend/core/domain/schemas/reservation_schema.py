@@ -18,7 +18,7 @@ class ReservationRead(BaseModel):
     party_size: int
     status: str
     created_at: Optional[datetime] = None
-    update_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -1,24 +1,20 @@
 from uuid import UUID
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
-from core.services import RestaurantService
+from core.services.restaurant_service import SRestaurantService
 from core.domain.schemas import RestaurantCreate, RestaurantRead
 
 # Se crea un router específico para el controlador de restaurantes
 router = APIRouter()
-
-# Inyección de dependencias del servicio
-def get_restaurant_service() -> RestaurantService:
-    return RestaurantService()
 
 @router.post("/", 
              response_model=RestaurantRead, 
              status_code=status.HTTP_201_CREATED, 
              summary="Crear un nuevo restaurante")
 async def create_restaurant(restaurant_data: RestaurantCreate, 
-                          service: RestaurantService = Depends(get_restaurant_service)):
+                          service: SRestaurantService):
     """
     Crea un nuevo restaurante en la base de datos.
     """
@@ -27,7 +23,7 @@ async def create_restaurant(restaurant_data: RestaurantCreate,
 @router.get("/", 
             response_model=List[RestaurantRead], 
             summary="Obtener todos los restaurantes")
-async def get_all_restaurants(service: RestaurantService = Depends(get_restaurant_service)):
+async def get_all_restaurants(service: SRestaurantService):
     """
     Retorna una lista de todos los restaurantes.
     """
@@ -37,7 +33,7 @@ async def get_all_restaurants(service: RestaurantService = Depends(get_restauran
             response_model=RestaurantRead, 
             summary="Obtener un restaurante por su ID")
 async def get_restaurant_by_id(restaurant_id: UUID, 
-                             service: RestaurantService = Depends(get_restaurant_service)):
+                             service: SRestaurantService):
     """
     Retorna un restaurante específico basado en su UUID.
     """

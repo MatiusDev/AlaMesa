@@ -3,6 +3,8 @@ services:
     build: ./backend
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
+    volumes:
+      - ./backend:/app
     environment:
       MONGODB_URI: ${MONGODB_URI}
       POSTGRES_HOST: ${POSTGRES_HOST}

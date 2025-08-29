@@ -1,24 +1,21 @@
-from typing import Optional
-from pydantic import Field, PrivateAttr
-from uuid import UUID
+from typing import List, Optional
+from uuid import UUID, uuid4
 from datetime import datetime
+from sqlmodel import Field, SQLModel, Relationship, Relationship
 
-from core.database.base_model import CustomBaseModel
-
-class Reservation(CustomBaseModel):
+class Reservation(SQLModel, table=True):
     """Modelo para la tabla Reservations."""
-    _table_name = PrivateAttr("reservations")
-    _primary_key = PrivateAttr("reservation_id")
+    __tablename__ = "reservations"
 
-    reservation_id: Optional[UUID] = Field(default=None, alias='id')
-    restaurant_id: UUID
-    diner_id: UUID
+    reservation_id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+    restaurant_id: UUID = Field(foreign_key="restaurants.restaurant_id")
+    diner_id: UUID = Field(foreign_key="diners.diner_id")
     reservation_time: datetime
     party_size: int
     status: str
-    created_at: Optional[datetime] = None
-    update_at: Optional[datetime] = None
+    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    updated_at: datetime | None = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        from_attributes = True
-        validate_by_name = True
+    # Relaciones
+    restaurant: "Restaurant" = Relationship(back_populates="reservations")
+    diner: "Diner" = Relationship(back_populates="reservations")

@@ -18,6 +18,7 @@ class RestaurantCreate(BaseModel):
     state: str
     opening_hours: Optional[Any] = None # JSONB
     features: Optional[List[str]] = None
+    images: Optional[List[str]] = None
 
 # DTO for reading a restaurant (output)
 class RestaurantRead(BaseModel):
@@ -29,6 +30,7 @@ class RestaurantRead(BaseModel):
     rating: Optional[float] = None
     reviews_count: Optional[int] = None
     menu_url: Optional[str] = None
+    images: Optional[List[str]] = None
     phone: str
     email: str
     website: Optional[str] = None

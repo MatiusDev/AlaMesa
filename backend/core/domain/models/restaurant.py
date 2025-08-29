@@ -1,35 +1,36 @@
-from typing import List, Optional, Any
-from pydantic import Field, PrivateAttr
-from uuid import UUID
+from typing import Any
+from uuid import UUID, uuid4
 from datetime import datetime
+from sqlmodel import Field, SQLModel, Relationship, Column
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 
-from core.database.base_model import CustomBaseModel
-
-class Restaurant(CustomBaseModel):
+class Restaurant(SQLModel, table=True):
     """Modelo para la tabla Restaurants."""
-    _table_name = PrivateAttr("restaurants")
-    _primary_key = PrivateAttr("restaurant_id")
+    __tablename__ = "restaurants"
 
-    restaurant_id: Optional[UUID] = Field(default=None, alias='id')
-    owner_id: UUID
-    name: str
-    restaurant_type: List[str]
-    price_range: Optional[str] = None
-    rating: Optional[float] = None
-    reviews_count: Optional[int] = None
-    menu_url: Optional[str] = None
+    restaurant_id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+    owner_id: UUID = Field(foreign_key="owners.owner_id")
+    name: str = Field(unique=True)
+    restaurant_type: list[str] = Field(sa_column=Column(ARRAY(String)))
+    price_range: str | None = None
+    rating: float | None = None
+    reviews_count: int | None = None
+    menu_url: str | None = None
+    images: list[str] | None = Field(default_factory=list, sa_column=Column(ARRAY(String)))
     phone: str
     email: str
-    website: Optional[str] = None
+    website: str | None = None
     full_address: str
-    street: Optional[str] = None
+    street: str | None = None
     city: str
     state: str
-    opening_hours: Optional[Any] = None # JSONB
-    features: Optional[List[str]] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    opening_hours: Any | None = Field(default=None, sa_column=Column(JSONB)) # JSONB
+    features: list[str] | None = Field(default_factory=list, sa_column=Column(ARRAY(String)))
+    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    updated_at: datetime | None = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        from_attributes = True
-        validate_by_name = True
+    # Relación con el modelo Owner
+    owner: "Owner" = Relationship(back_populates="restaurants")
+    reviews: list["Review"] = Relationship(back_populates="restaurant")
+    reservations: list["Reservation"] = Relationship(back_populates="restaurant")

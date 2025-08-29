@@ -3,6 +3,7 @@ from .owner_schema import OwnerCreate, OwnerRead
 from .reservation_schema import ReservationCreate, ReservationRead
 from .restaurant_schema import RestaurantCreate, RestaurantRead
 from .review_schema import ReviewCreate, ReviewRead
+from .user_schema import UserCreate, UserRead
 
 __all__ = [
     "DinerCreate", "DinerRead",
@@ -10,4 +11,5 @@ __all__ = [
     "ReservationCreate", "ReservationRead",
     "RestaurantCreate", "RestaurantRead",
     "ReviewCreate", "ReviewRead",
+    "UserCreate", "UserRead",
 ]
