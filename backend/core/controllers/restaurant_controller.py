@@ -4,7 +4,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, status
 
 from core.services.restaurant_service import SRestaurantService
-from core.domain.schemas import RestaurantCreate, RestaurantRead
+from core.domain.schemas.restaurant_schema import RestaurantCreate, RestaurantRead
 
 # Se crea un router específico para el controlador de restaurantes
 router = APIRouter()

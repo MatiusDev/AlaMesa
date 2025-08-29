@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from core.services.reservation_service import SReservationService
-from core.domain.schemas import ReservationCreate, ReservationRead
+from core.domain.schemas.reservation_schema import ReservationCreate, ReservationRead
 
 router = APIRouter()
 

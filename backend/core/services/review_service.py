@@ -4,8 +4,8 @@ from typing import List, Optional, Annotated
 from fastapi import Depends, HTTPException
 from sqlmodel import Session, select
 
-from core.domain.models import Review
-from core.domain.schemas import ReviewCreate, ReviewRead
+from core.domain.models.review import Review
+from core.domain.schemas.review_schema import ReviewCreate, ReviewRead
 from core.database.connection import SSession
 from .restaurant_service import SRestaurantService
 from .diner_service import SDinerService
@@ -17,11 +17,11 @@ class ReviewService:
         self.diner_service = diner_service
 
     async def get_all_reviews(self) -> List[ReviewRead]:
-        reviews = await self.session.exec(select(Review)).all()
+        reviews = (await self.session.exec(select(Review))).all()
         return [ReviewRead.model_validate(r) for r in reviews]
 
     async def get_review_by_id(self, review_id: UUID) -> Optional[ReviewRead]:
-        review = await self.session.exec(select(Review).where(Review.review_id == review_id)).first()
+        review = (await self.session.exec(select(Review).where(Review.review_id == review_id))).first()
         if review:
             return ReviewRead.model_validate(review)
         return None
