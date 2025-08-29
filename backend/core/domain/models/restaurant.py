@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship, Column
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.sql.sqltypes import TIMESTAMP
 
 class Restaurant(SQLModel, table=True):
     """Modelo para la tabla Restaurants."""
@@ -27,8 +28,8 @@ class Restaurant(SQLModel, table=True):
     state: str
     opening_hours: Any | None = Field(default=None, sa_column=Column(JSONB)) # JSONB
     features: list[str] | None = Field(default_factory=list, sa_column=Column(ARRAY(String)))
-    created_at: datetime | None = Field(default_factory=datetime.utcnow)
-    updated_at: datetime | None = Field(default_factory=datetime.utcnow)
+    created_at: datetime | None = Field(default_factory=datetime.utcnow, sa_column=Column(TIMESTAMP(timezone=True)))
+    updated_at: datetime | None = Field(default_factory=datetime.utcnow, sa_column=Column(TIMESTAMP(timezone=True)))
 
     # Relación con el modelo Owner
     owner: "Owner" = Relationship(back_populates="restaurants")
