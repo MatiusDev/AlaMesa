@@ -20,7 +20,7 @@ _FORMAT_RESTAURANT_DETAIL = """
     "reviews_count": "integer (ej. 120) | null",
     "address": {
       "full_address": "string | null",
-      "street": "string | null",
+      "neighborhood": "string | null",
       "city": "string | null",
       "state": "string | null"
     },
