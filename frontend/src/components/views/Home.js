@@ -1,5 +1,6 @@
 import RestaurantCard from '@components/ui/RestaurantCard.js';
 import CategoryCard from '@components/ui/CategoryCard.js';
+import { renderGoogleMaps, initGoogleMapsComponent } from '@components/ui/Maps.js';
 
 const Home = () => {
   const state = {};
@@ -47,8 +48,30 @@ const Home = () => {
           ${[...sampleRestaurants].sort((a,b)=>b.rating-a.rating).slice(0,3).map(RestaurantCard).join('')}
         </div>
       </div>
+
+      <div class="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+        <div>
+          <h2 class="text-2xl font-bold mb-3">Sobre AlaMesa</h2>
+          <p class="text-neutral-600">Nuestra misión es conectar a comensales con experiencias memorables y ayudar a los restaurantes a llenar sus mesas. Con una interfaz moderna y herramientas simples, facilitamos la búsqueda, el descubrimiento y las reservas en pocos clics.</p>
+        </div>
+        <div class="rounded-[var(--am-radius)] border border-neutral-200 bg-white p-6 shadow-soft">
+          <h3 class="text-lg font-semibold">¿Tienes un restaurante?</h3>
+          <p class="mt-1 text-neutral-600">Únete a AlaMesa y llega a más clientes. Administra disponibilidad, destaca tu propuesta y recibe reservas en tiempo real.</p>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <a href="#/auth" class="rounded-full bg-am-600 hover:bg-am-700 text-white px-5 py-2">Regístrate</a>
+            <a href="#/auth" class="rounded-full border border-neutral-300 hover:border-neutral-400 px-5 py-2">Inicia sesión</a>
+          </div>
+        </div>
+      </div>
+
+      ${renderGoogleMaps()}
     </section>
   `;
+
+  // Inicializar el componente del mapa después de renderizar
+  setTimeout(() => {
+    initGoogleMapsComponent();
+  }, 300);
 
   return { state, actions, view };
 };

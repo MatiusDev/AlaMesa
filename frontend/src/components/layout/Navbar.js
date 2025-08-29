@@ -17,6 +17,7 @@ const Navbar = () => {
     compact: false,
     menuX: 16,
     menuY: 80,
+    menuClosing: false,
   };
 
   const actions = {
@@ -40,6 +41,7 @@ const Navbar = () => {
     },
     toggleMenu: () => {
       state.menuOpen = !state.menuOpen;
+      state.menuClosing = false;
       if (state.menuOpen) {
         const btn = document.querySelector('[data-ref="logoBtn"]');
         if (btn) {
@@ -47,6 +49,37 @@ const Navbar = () => {
           state.menuX = Math.round(rect.left + window.scrollX);
           state.menuY = Math.round(rect.bottom + window.scrollY + 8);
         }
+      }
+    },
+    menuGotoHome: (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      state.menuClosing = true;
+      setTimeout(() => {
+        state.menuOpen = false;
+        state.menuClosing = false;
+        window.location.hash = '#/';
+      }, 300);
+    },
+    menuGotoRestaurants: (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      state.menuClosing = true;
+      setTimeout(() => {
+        state.menuOpen = false;
+        state.menuClosing = false;
+        window.location.hash = '#/restaurants';
+      }, 300);
+    },
+    closeAllOverlays: () => {
+      // Cerrar dropdowns de búsqueda
+      state.openField = null;
+      state.expanded = false;
+      // Cerrar menú del logo con animación
+      if (state.menuOpen) {
+        state.menuClosing = true;
+        setTimeout(() => {
+          state.menuOpen = false;
+          state.menuClosing = false;
+        }, 300);
       }
     },
     closeDropdowns: () => { state.openField = null; state.expanded = false; },
@@ -132,10 +165,10 @@ const Navbar = () => {
             <span class="hidden sm:inline text-lg font-semibold">AlaMesa</span>
             <i class="fa-solid fa-chevron-down text-am-600 text-sm transition-transform ${state.menuOpen ? 'rotate-180' : ''}"></i>
           </button>
-          ${state.menuOpen ? `
-          <nav class="fixed z-50 w-56 rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]" style="left:${state.menuX}px; top:${state.menuY}px;">
-            <a class="block rounded px-3 py-2 transition-colors duration-200 hover:bg-neutral-100" href="#/" data-onclick="gotoHome">Inicio</a>
-            <a class="block rounded px-3 py-2 transition-colors duration-200 hover:bg-neutral-100" href="#/restaurants" data-onclick="gotoRestaurants">Restaurantes</a>
+          ${(state.menuOpen || state.menuClosing) ? `
+          <nav class="fixed z-50 w-56 rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2 transform origin-top-left transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${state.menuClosing ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}" style="left:${state.menuX}px; top:${state.menuY}px;">
+            <a class="block rounded px-3 py-2 transition-colors duration-200 hover:bg-neutral-100" href="#/" data-onclick="menuGotoHome">Inicio</a>
+            <a class="block rounded px-3 py-2 transition-colors duration-200 hover:bg-neutral-100" href="#/restaurants" data-onclick="menuGotoRestaurants">Restaurantes</a>
           </nav>` : ''}
         </div>
 
@@ -230,7 +263,9 @@ const Navbar = () => {
       </div>
 
     </header>
-    ${state.expanded ? '' : ''}
+    ${(state.expanded || state.menuOpen) ? `
+      <div class="fixed inset-0 z-40 bg-transparent" data-onclick="closeAllOverlays" aria-hidden="true"></div>
+    ` : ''}
   `;
   };
 
