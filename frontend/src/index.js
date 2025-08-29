@@ -9,4 +9,4 @@ import App from '@components/App.js';
 // 2. Los scripts con `type="module"` se difieren por defecto, ejecutándose después del parseo del HTML.
 
 // createRoot maneja internamente el caso de que el elemento no se encuentre.
-createRoot(document.getElementById('app')).render(App);
+createRoot(document.getElementById('root')).render(App);
