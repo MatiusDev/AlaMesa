@@ -1,6 +1,7 @@
 // frontend/src/router/index.js
-import Counter from '@views/Counter.js';
+import Home from '@views/Home.js';
 import Restaurants from '@views/Restaurants.js';
+import Auth from '@views/Auth.js';
 
 /**
  * @description
@@ -8,6 +9,7 @@ import Restaurants from '@views/Restaurants.js';
  * Mapea una ruta (el "hash" de la URL) a la función constructora del componente que debe renderizarse.
  */
 export default {
-  '#/': Counter,
+  '#/': Home,
   '#/restaurants': Restaurants,
+  '#/auth': Auth,
 };
