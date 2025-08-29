@@ -20,6 +20,7 @@ class RestaurantService:
 
     async def get_restaurant_by_id(self, restaurant_id: UUID) -> Optional[RestaurantRead]:
         restaurant = (await self.session.exec(select(Restaurant).where(Restaurant.restaurant_id == restaurant_id))).first()
+        
         if restaurant:
             return RestaurantRead.model_validate(restaurant)
         return None
