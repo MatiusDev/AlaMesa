@@ -4,8 +4,8 @@ from typing import List, Optional, Annotated
 from fastapi import Depends
 from sqlmodel import Session, select
 
-from core.domain.models import Restaurant
-from core.domain.schemas import RestaurantCreate, RestaurantRead
+from core.domain.models.restaurant import Restaurant
+from core.domain.schemas.restaurant_schema import RestaurantCreate, RestaurantRead
 from core.database.connection import SSession
 from .owner_service import SOwnerService
 
@@ -15,11 +15,11 @@ class RestaurantService:
         self.owner_service = owner_service
 
     async def get_all_restaurants(self) -> List[RestaurantRead]:
-        restaurants = await self.session.exec(select(Restaurant)).all()
+        restaurants = (await self.session.exec(select(Restaurant))).all()
         return [RestaurantRead.model_validate(r) for r in restaurants]
 
     async def get_restaurant_by_id(self, restaurant_id: UUID) -> Optional[RestaurantRead]:
-        restaurant = await self.session.exec(select(Restaurant).where(Restaurant.restaurant_id == restaurant_id)).first()
+        restaurant = (await self.session.exec(select(Restaurant).where(Restaurant.restaurant_id == restaurant_id))).first()
         if restaurant:
             return RestaurantRead.model_validate(restaurant)
         return None

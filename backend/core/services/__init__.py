@@ -1,1 +1,0 @@
-# Este archivo se deja intencionalmente vacío para evitar dependencias circulares.

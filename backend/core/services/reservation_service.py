@@ -4,8 +4,8 @@ from typing import List, Optional, Annotated
 from fastapi import Depends, HTTPException
 from sqlmodel import Session, select
 
-from core.domain.models import Reservation
-from core.domain.schemas import ReservationCreate, ReservationRead
+from core.domain.models.reservation import Reservation
+from core.domain.schemas.reservation_schema import ReservationCreate, ReservationRead
 from core.database.connection import SSession
 from .restaurant_service import SRestaurantService
 from .diner_service import SDinerService
@@ -17,11 +17,11 @@ class ReservationService:
         self.diner_service = diner_service
 
     async def get_all_reservations(self) -> List[ReservationRead]:
-        reservations = await self.session.exec(select(Reservation)).all()
+        reservations = (await self.session.exec(select(Reservation))).all()
         return [ReservationRead.model_validate(r) for r in reservations]
 
     async def get_reservation_by_id(self, reservation_id: UUID) -> Optional[ReservationRead]:
-        reservation = await self.session.exec(select(Reservation).where(Reservation.reservation_id == reservation_id)).first()
+        reservation = (await self.session.exec(select(Reservation).where(Reservation.reservation_id == reservation_id))).first()
         if reservation:
             return ReservationRead.model_validate(reservation)
         return None

@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from core.services.review_service import SReviewService
-from core.domain.schemas import ReviewCreate, ReviewRead
+from core.domain.schemas.review_schema import ReviewCreate, ReviewRead
 
 router = APIRouter()
 
