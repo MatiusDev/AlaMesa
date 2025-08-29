@@ -10,8 +10,13 @@ env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 from core.router import routes as api_routes
+from core.database.connection import init_db
 
 app = FastAPI()
+
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
 
 app.include_router(api_routes, prefix="/api")
 
