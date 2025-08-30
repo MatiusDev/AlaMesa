@@ -1,5 +1,6 @@
 // frontend/src/components/App.js
 import Navbar from '@layout/Navbar.js';
+import Footer from '@layout/Footer.js';
 import Router from '@components/Router.js';
 import { renderComponent } from '@utils/renderComponent.js';
 
@@ -9,6 +10,7 @@ import { renderComponent } from '@utils/renderComponent.js';
  */
 const App = () => {
   const navbarComponent = Navbar();
+  const footerComponent = Footer();
   const routerComponent = Router();
 
   const view = () => {
@@ -17,12 +19,13 @@ const App = () => {
         ${renderComponent(navbarComponent)}
         ${renderComponent(routerComponent)}
       </main>
+      ${renderComponent(footerComponent)}
     `;
   };
 
   return {
     view,
-    children: [navbarComponent, routerComponent, ...routerComponent.children]
+    children: [navbarComponent, footerComponent, routerComponent, ...routerComponent.children]
   };
 };
 

@@ -18,6 +18,9 @@ const Navbar = () => {
     menuX: 16,
     menuY: 80,
     menuClosing: false,
+    menuPosition: 'below', // 'above' | 'below'
+    showFeedback: false,
+    feedbackMessage: '',
   };
 
   const actions = {
@@ -26,6 +29,13 @@ const Navbar = () => {
     updateCuisine: (e) => { state.cuisine = e.target.value; },
     updateDateTemp: (e) => { state.tempDate = e.target.value; },
     updateTimeTemp: (e) => { state.tempTime = e.target.value; },
+    onScroll: () => {
+      // Solo cerrar el menú al hacer scroll para evitar problemas de posicionamiento
+      if (state.menuOpen) {
+        state.menuOpen = false;
+        state.menuClosing = false;
+      }
+    },
     submitSearch: (e) => {
       e.preventDefault();
       const params = new URLSearchParams({
@@ -38,51 +48,115 @@ const Navbar = () => {
       window.location.hash = `#/restaurants?${params.toString()}`;
       state.expanded = false;
       state.openField = null;
+      
+      // Limpiar campos después del submit
+      state.query = '';
+      state.location = '';
+      state.cuisine = '';
+      state.date = '';
+      state.time = '';
+      state.tempDate = '';
+      state.tempTime = '';
     },
     toggleMenu: () => {
+      // Si el menú está cerrando, no hacer nada
+      if (state.menuClosing) return;
+      
+      // Toggle del estado
       state.menuOpen = !state.menuOpen;
-      state.menuClosing = false;
+      
       if (state.menuOpen) {
+        // Calcular posición del menú
         const btn = document.querySelector('[data-ref="logoBtn"]');
         if (btn) {
           const rect = btn.getBoundingClientRect();
-          state.menuX = Math.round(rect.left + window.scrollX);
-          state.menuY = Math.round(rect.bottom + window.scrollY + 8);
+          const viewportHeight = window.innerHeight;
+          const menuHeight = 120;
+          
+          // Posición X - centrado horizontalmente con el botón
+          state.menuX = Math.round(rect.left + (rect.width / 2) - 112); // 112 = w-56 / 2
+          
+          // Posición Y - siempre debajo del botón para evitar conflictos
+          state.menuY = Math.round(rect.bottom + 8);
+          
+          // Si no hay espacio abajo, mostrar arriba
+          if (state.menuY + menuHeight > viewportHeight - 20) {
+            state.menuY = Math.round(rect.top - menuHeight - 8);
+            state.menuPosition = 'above';
+          } else {
+            state.menuPosition = 'below';
+          }
+          
+          // Asegurar que no se salga de la pantalla
+          if (state.menuX < 20) state.menuX = 20;
+          if (state.menuX + 224 > viewportHeight) state.menuX = viewportHeight - 244;
+          if (state.menuY < 20) state.menuY = 20;
         }
+      } else {
+        // Cerrar menú inmediatamente
+        state.menuOpen = false;
+        state.menuClosing = false;
       }
     },
     menuGotoHome: (e) => {
       if (e && e.preventDefault) e.preventDefault();
-      state.menuClosing = true;
-      setTimeout(() => {
-        state.menuOpen = false;
-        state.menuClosing = false;
-        window.location.hash = '#/';
-      }, 300);
+      // Navegar inmediatamente
+      window.location.hash = '#/';
+      // Cerrar menú después de navegar
+      state.menuOpen = false;
+      state.menuClosing = false;
     },
     menuGotoRestaurants: (e) => {
       if (e && e.preventDefault) e.preventDefault();
-      state.menuClosing = true;
-      setTimeout(() => {
-        state.menuOpen = false;
-        state.menuClosing = false;
-        window.location.hash = '#/restaurants';
-      }, 300);
+      // Navegar inmediatamente
+      window.location.hash = '#/restaurants';
+      // Cerrar menú después de navegar
+      state.menuOpen = false;
+      state.menuClosing = false;
     },
     closeAllOverlays: () => {
       // Cerrar dropdowns de búsqueda
       state.openField = null;
       state.expanded = false;
-      // Cerrar menú del logo con animación
-      if (state.menuOpen) {
-        state.menuClosing = true;
-        setTimeout(() => {
-          state.menuOpen = false;
-          state.menuClosing = false;
-        }, 300);
-      }
+      // Cerrar menú del logo inmediatamente
+      state.menuOpen = false;
+      state.menuClosing = false;
     },
-    closeDropdowns: () => { state.openField = null; state.expanded = false; },
+    closeLogoMenu: () => {
+      // Solo cerrar el menú del logo
+      state.menuOpen = false;
+      state.menuClosing = false;
+    },
+
+    closeDropdowns: () => { 
+      state.openField = null; 
+      state.expanded = false; 
+    },
+    clearAllSelections: () => {
+      // Limpiar todos los campos seleccionados
+      state.query = '';
+      state.location = '';
+      state.cuisine = '';
+      state.date = '';
+      state.time = '';
+      state.tempDate = '';
+      state.tempTime = '';
+      state.openField = null;
+      state.expanded = false;
+      
+      // Mostrar feedback de limpieza
+      state.showFeedback = true;
+      state.feedbackMessage = 'Todas las selecciones han sido limpiadas';
+      
+      // Ocultar feedback después de 2 segundos
+      setTimeout(() => {
+        state.showFeedback = false;
+      }, 2000);
+    },
+    closeSearchDropdowns: () => {
+      state.openField = null;
+      // No cerrar expanded aquí para permitir selecciones
+    },
     toggleRestaurant: () => { state.expanded = true; state.openField = state.openField === 'restaurant' ? null : 'restaurant'; },
     toggleLocation: () => { state.expanded = true; state.openField = state.openField === 'location' ? null : 'location'; },
     toggleCuisine: () => { state.expanded = true; state.openField = state.openField === 'cuisine' ? null : 'cuisine'; },
@@ -96,17 +170,99 @@ const Navbar = () => {
       const baseDate = parts ? new Date(Number(parts[2]), Number(parts[1]) - 1, 1) : new Date();
       state.calendarCursor = baseDate.toISOString();
     },
-    selectRestaurant: (e) => { state.query = e.currentTarget.dataset.value || ''; state.openField = null; },
-    selectLocation: (e) => { state.location = e.currentTarget.dataset.value || ''; state.openField = null; },
-    selectCuisine: (e) => { state.cuisine = e.currentTarget.dataset.value || ''; state.openField = null; },
-    clearQuery: () => { state.query = ''; },
-    clearLocation: () => { state.location = ''; },
-    clearCuisine: () => { state.cuisine = ''; },
-    clearDatetime: () => { state.tempDate = ''; state.tempTime = ''; },
-    applyDatetime: () => { state.date = state.tempDate; state.time = state.tempTime; state.openField = null; },
-    clearDateTimeInline: () => { state.date = ''; state.time = ''; },
+    selectRestaurant: (e) => { 
+      const value = e.currentTarget.dataset.value || '';
+      state.query = value; 
+      state.openField = null; 
+      
+      // Mostrar feedback
+      state.showFeedback = true;
+      state.feedbackMessage = `Restaurante seleccionado: ${value}`;
+      
+      // Cerrar feedback después de 2 segundos
+      setTimeout(() => {
+        state.showFeedback = false;
+      }, 2000);
+    },
+    selectLocation: (e) => { 
+      const value = e.currentTarget.dataset.value || '';
+      state.location = value; 
+      state.openField = null; 
+      
+      // Mostrar feedback
+      state.showFeedback = true;
+      state.feedbackMessage = `Ubicación seleccionada: ${value}`;
+      
+      // Cerrar feedback después de 2 segundos
+      setTimeout(() => {
+        state.showFeedback = false;
+      }, 2000);
+    },
+    selectCuisine: (e) => { 
+      const value = e.currentTarget.dataset.value || '';
+      state.cuisine = value; 
+      state.openField = null; 
+      
+      // Mostrar feedback
+      state.showFeedback = true;
+      state.feedbackMessage = `Tipo de comida seleccionado: ${value}`;
+      
+      // Cerrar feedback después de 2 segundos
+      setTimeout(() => {
+        state.showFeedback = false;
+      }, 2000);
+    },
+    clearQuery: () => { 
+      state.query = ''; 
+      // Mostrar feedback
+      state.showFeedback = true;
+      state.feedbackMessage = 'Restaurante limpiado';
+      setTimeout(() => { state.showFeedback = false; }, 1500);
+    },
+    clearLocation: () => { 
+      state.location = ''; 
+      // Mostrar feedback
+      state.showFeedback = true;
+      state.feedbackMessage = 'Ubicación limpiada';
+      setTimeout(() => { state.showFeedback = false; }, 1500);
+    },
+    clearCuisine: () => { 
+      state.cuisine = ''; 
+      // Mostrar feedback
+      state.showFeedback = true;
+      state.feedbackMessage = 'Tipo de comida limpiado';
+      setTimeout(() => { state.showFeedback = false; }, 1500);
+    },
+    clearDatetime: () => { 
+      state.tempDate = ''; 
+      state.tempTime = ''; 
+      // Mostrar feedback
+      state.showFeedback = true;
+      state.feedbackMessage = 'Fecha y hora limpiadas';
+      setTimeout(() => { state.showFeedback = false; }, 1500);
+    },
+    applyDatetime: () => { 
+      state.date = state.tempDate; 
+      state.time = state.tempTime; 
+      state.openField = null; 
+      // Mantener expanded para que se vea la selección
+      setTimeout(() => {
+        state.expanded = false;
+      }, 100);
+    },
+    clearDateTimeInline: () => { 
+      state.date = ''; 
+      state.time = ''; 
+      state.openField = null;
+      state.expanded = false;
+      
+      // Mostrar feedback
+      state.showFeedback = true;
+      state.feedbackMessage = 'Fecha y hora limpiadas';
+      setTimeout(() => { state.showFeedback = false; }, 1500);
+    },
     openSearch: () => { state.expanded = true; },
-    onScroll: () => { state.compact = false; },
+    updateCompact: () => { state.compact = false; },
     prevMonth: () => {
       const d = new Date(state.calendarCursor);
       d.setMonth(d.getMonth() - 1);
@@ -158,6 +314,11 @@ const Navbar = () => {
     const times = ['12:00','13:00','14:00','19:00','20:00','21:00'];
     return `
     <header class="fixed inset-x-0 top-0 z-50 bg-white/90 backdrop-blur border-b border-neutral-200/60 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] h-20">
+      ${state.showFeedback ? `
+      <div class="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] bg-am-600 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300">
+        ${state.feedbackMessage}
+      </div>
+      ` : ''}
       <div class="mx-auto max-w-7xl px-4 h-full flex items-center gap-4 overflow-x-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]">
         <div class="relative">
           <button class="flex items-center gap-2" data-onclick="toggleMenu" data-ref="logoBtn" title="Abrir menú">
@@ -165,10 +326,10 @@ const Navbar = () => {
             <span class="hidden sm:inline text-lg font-semibold">AlaMesa</span>
             <i class="fa-solid fa-chevron-down text-am-600 text-sm transition-transform ${state.menuOpen ? 'rotate-180' : ''}"></i>
           </button>
-          ${(state.menuOpen || state.menuClosing) ? `
-          <nav class="fixed z-50 w-56 rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2 transform origin-top-left transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${state.menuClosing ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}" style="left:${state.menuX}px; top:${state.menuY}px;">
-            <a class="block rounded px-3 py-2 transition-colors duration-200 hover:bg-neutral-100" href="#/" data-onclick="menuGotoHome">Inicio</a>
-            <a class="block rounded px-3 py-2 transition-colors duration-200 hover:bg-neutral-100" href="#/restaurants" data-onclick="menuGotoRestaurants">Restaurantes</a>
+          ${state.menuOpen ? `
+          <nav class="fixed z-[9999] w-56 rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2" style="left:${state.menuX}px; top:${state.menuY}px;">
+            <a class="block rounded px-3 py-2 transition-colors duration-200 hover:bg-neutral-100" href="javascript:void(0)" data-onclick="menuGotoHome">Inicio</a>
+            <a class="block rounded px-3 py-2 transition-colors duration-200 hover:bg-neutral-100" href="javascript:void(0)" data-onclick="menuGotoRestaurants">Restaurantes</a>
           </nav>` : ''}
         </div>
 
@@ -176,9 +337,9 @@ const Navbar = () => {
           <div class="relative mx-auto w-full max-w-6xl rounded-full border border-neutral-200 bg-white shadow-soft transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${state.expanded ? 'ring-2 ring-am-600/30 shadow-lg' : ''} overflow-hidden">
             <div class="grid grid-cols-1 md:grid-cols-[1.35fr_1fr_1fr_1.2fr_auto] divide-y md:divide-y-0 md:divide-x divide-neutral-200 items-stretch">
               <div class="relative">
-                <button type="button" class="w-full h-11 ${state.query ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50" data-onclick="toggleRestaurant" data-onfocus="openSearch">
+                <button type="button" class="w-full h-11 ${state.query ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${state.query ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleRestaurant" data-onfocus="openSearch">
                   <i class="fa-solid fa-bowl-food text-am-600"></i>
-                  <span class="truncate ${state.query ? 'text-neutral-900' : 'text-neutral-400'}">${state.query || '¿Dónde quieres comer?'}</span>
+                  <span class="truncate ${state.query ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${state.query || '¿Dónde quieres comer?'}</span>
                 </button>
                 ${state.query ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearQuery\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
                 ${state.openField === 'restaurant' ? `
@@ -188,9 +349,9 @@ const Navbar = () => {
               </div>
 
               <div class="relative">
-                <button type="button" class="w-full h-11 ${state.location ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50" data-onclick="toggleLocation" data-onfocus="openSearch">
+                <button type="button" class="w-full h-11 ${state.location ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${state.location ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleLocation" data-onfocus="openSearch">
                   <i class="fa-solid fa-location-dot text-am-600"></i>
-                  <span class="truncate ${state.location ? 'text-neutral-900' : 'text-neutral-400'}">${state.location || 'Ubicación'}</span>
+                  <span class="truncate ${state.location ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${state.location || 'Ubicación'}</span>
                 </button>
                 ${state.location ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearLocation\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
                 ${state.openField === 'location' ? `
@@ -200,9 +361,9 @@ const Navbar = () => {
               </div>
 
               <div class="relative">
-                <button type="button" class="w-full h-11 ${state.cuisine ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50" data-onclick="toggleCuisine" data-onfocus="openSearch">
+                <button type="button" class="w-full h-11 ${state.cuisine ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${state.cuisine ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleCuisine" data-onfocus="openSearch">
                   <i class="fa-solid fa-utensils text-am-600"></i>
-                  <span class="truncate ${state.cuisine ? 'text-neutral-900' : 'text-neutral-400'}">${state.cuisine || 'Tipo de comida'}</span>
+                  <span class="truncate ${state.cuisine ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${state.cuisine || 'Tipo de comida'}</span>
                 </button>
                 ${state.cuisine ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearCuisine\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
                 ${state.openField === 'cuisine' ? `
@@ -212,9 +373,9 @@ const Navbar = () => {
               </div>
 
               <div class="relative">
-                <button type="button" class="w-full h-11 ${(state.date||state.time) ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50" data-onclick="toggleDatetime" data-onfocus="openSearch">
+                <button type="button" class="w-full h-11 ${(state.date||state.time) ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${(state.date||state.time) ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleDatetime" data-onfocus="openSearch">
                   <i class="fa-solid fa-calendar-days text-am-600"></i>
-                  <span class="truncate ${state.date || state.time ? 'text-neutral-900' : 'text-neutral-400'}">${(state.date && state.time) ? `${state.date} ${state.time}` : (state.date || 'Fecha y hora')}</span>
+                  <span class="truncate ${state.date || state.time ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${(state.date && state.time) ? `${state.date} ${state.time}` : (state.date || 'Fecha y hora')}</span>
                 </button>
                 ${(state.date || state.time) ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearDateTimeInline\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
                 ${state.openField === 'datetime' ? `
@@ -247,7 +408,12 @@ const Navbar = () => {
                 </div>` : ''}
               </div>
 
-              <div class="flex items-center justify-center px-3 py-1">
+              <div class="flex items-center justify-center px-3 py-1 gap-2">
+                ${(state.query || state.location || state.cuisine || state.date || state.time) ? `
+                <button type="button" aria-label="Limpiar todas las selecciones" class="h-9 w-9 grid place-items-center rounded-full bg-neutral-500 hover:bg-neutral-600 text-white shadow transition-colors" data-onclick="clearAllSelections">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+                ` : ''}
                 <button type="submit" aria-label="Buscar" class="h-9 w-9 grid place-items-center rounded-full bg-am-600 hover:bg-am-700 text-white shadow">
                   <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
@@ -263,13 +429,25 @@ const Navbar = () => {
       </div>
 
     </header>
-    ${(state.expanded || state.menuOpen) ? `
-      <div class="fixed inset-0 z-40 bg-transparent" data-onclick="closeAllOverlays" aria-hidden="true"></div>
-    ` : ''}
+
   `;
   };
 
   const component = { state, actions, view };
+  
+  // Event listener para cerrar el menú cuando se hace clic fuera
+  window.addEventListener('click', (e) => {
+    if (state.menuOpen) {
+      const menu = document.querySelector('nav[class*="fixed z-[9999]"]');
+      const logoBtn = document.querySelector('[data-ref="logoBtn"]');
+      
+      if (menu && !menu.contains(e.target) && logoBtn && !logoBtn.contains(e.target)) {
+        state.menuOpen = false;
+        state.menuClosing = false;
+      }
+    }
+  });
+  
   window.addEventListener('scroll', () => component.actions.onScroll());
   return component;
 };
