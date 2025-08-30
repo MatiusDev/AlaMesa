@@ -83,8 +83,7 @@ jobs:
             set -e # Exit immediately if a command exits with a non-zero status.
             
             # Las variables DEPLOY_PATH y WEB_ROOT se inyectan desde la sección 'env' de abajo.
-            # DEPLOY_PATH="${{ secrets.PRODUCTION_PATH }}"
-            # WEB_ROOT="/var/www/alamesa-frontend"
+            
             REPO_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
             FRONTEND_IMAGE="ghcr.io/${{ github.repository_owner }}/alamesa/alamesa-frontend:production"
 
