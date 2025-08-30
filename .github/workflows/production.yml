@@ -101,14 +101,17 @@ jobs:
 
             echo "🚀 Iniciando despliegue..."
 
-            # Paso 1: Clonar o actualizar el repositorio
-            if [ -d "$DEPLOY_PATH" ]; then
-              echo "✅ Directorio encontrado. Actualizando repositorio..."
+            # Paso 1: Clonar o actualizar el repositorio de forma robusta
+            if [ -d "$DEPLOY_PATH/.git" ]; then
+              # Si el directorio .git existe, es un repo. Lo actualizamos.
+              echo "✅ Repositorio Git encontrado. Actualizando..."
               cd "$DEPLOY_PATH"
               git checkout production
               git pull origin production
             else
-              echo "🔵 Directorio no encontrado. Clonando repositorio..."
+              # Si no es un repo Git (o no existe el directorio), lo clonamos desde cero.
+              echo "🔵 Repositorio no encontrado o corrupto. Clonando de nuevo..."
+              rm -rf "$DEPLOY_PATH"
               git clone --branch production "$REPO_URL" "$DEPLOY_PATH"
               cd "$DEPLOY_PATH"
             fi
