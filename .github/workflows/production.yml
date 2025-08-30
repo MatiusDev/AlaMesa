@@ -84,6 +84,8 @@ jobs:
             # Ejecutar backend
             docker run -d --name alamesa-backend \
               --network alamesa-network \
+              -e MONGO_INITDB_ROOT_USERNAME="${{ secrets.MONGO_INITDB_ROOT_USERNAME }}" \
+              -e MONGO_INITDB_ROOT_PASSWORD="${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}" \
               -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
               -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
               -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
