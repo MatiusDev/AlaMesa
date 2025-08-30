@@ -5,17 +5,17 @@ on:
 
 jobs:
   build-production:
-    name: Build Production Images
+    name: Build and Push Production Images
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -25,27 +25,29 @@ jobs:
         id: string
         run: echo "repository_lowercase=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      - name: Build and push production images
-        uses: docker/build-push-action@v4
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
         with:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-backend:production
-            ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-backend:latest
             ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build and push frontend production
-        uses: docker/build-push-action@v4
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:production
-            ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:latest
             ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy-production:
     name: Deploy to Production Server
@@ -53,55 +55,77 @@ jobs:
     needs: build-production
     environment: production
     steps:
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v0.1.9
+      - name: Create .env file content
+        id: create_env
+        run: |
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> $GITHUB_OUTPUT
+          echo "POSTGRES_HOST=postgresql" >> $GITHUB_OUTPUT
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> $GITHUB_OUTPUT
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> $GITHUB_OUTPUT
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> $GITHUB_OUTPUT
+          echo "SERVER_HOST=${{ secrets.SERVER_HOST }}" >> $GITHUB_OUTPUT
+          echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENT=production" >> $GITHUB_OUTPUT
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_OUTPUT
+          echo "MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}" >> $GITHUB_OUTPUT
+          echo "MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: 22
           script: |
-            echo "🚀 Iniciando despliegue en producción..."
+            set -e # Exit immediately if a command exits with a non-zero status.
             
-            # Login al registry
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
-            
-            # Pull de las imágenes más recientes
-            docker pull ghcr.io/${{ github.repository }}/alamesa-backend:production
-            docker pull ghcr.io/${{ github.repository }}/alamesa-frontend:production
-            
-            # Parar y remover contenedores existentes
-            docker stop alamesa-backend alamesa-frontend || true
-            docker rm alamesa-backend alamesa-frontend || true
-            
-            # Crear red si no existe
-            docker network create alamesa-network || true
-            
-            # Crear volúmenes para persistencia
-            docker volume create alamesa-postgres-data || true
-            docker volume create alamesa-mongodb-data || true
-            
-            # Ejecutar backend
-            docker run -d --name alamesa-backend \
-              --network alamesa-network \
-              -e MONGO_INITDB_ROOT_USERNAME="${{ secrets.MONGO_INITDB_ROOT_USERNAME }}" \
-              -e MONGO_INITDB_ROOT_PASSWORD="${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}" \
-              -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
-              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
-              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
-              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
-              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-              -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-              -p 8000:8000 \
-              ghcr.io/${{ github.repository }}/alamesa-backend:production
-            
-            # Ejecutar frontend
-            docker run -d --name alamesa-frontend \
-              --network alamesa-network \
-              -p 80:80 \
-              ghcr.io/${{ github.repository }}/alamesa-frontend:production
-            
-            # Limpiar imágenes no utilizadas
-            docker image prune -f
-            
+            # Las variables DEPLOY_PATH y WEB_ROOT se inyectan desde la sección 'env' de abajo.
+            # DEPLOY_PATH="${{ secrets.PRODUCTION_PATH }}"
+            # WEB_ROOT="/var/www/alamesa-frontend"
+            REPO_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+            FRONTEND_IMAGE="ghcr.io/${{ github.repository_owner }}/alamesa/alamesa-frontend:production"
+
+            echo "🚀 Iniciando despliegue..."
+
+            # Paso 1: Clonar o actualizar el repositorio
+            if [ -d "$DEPLOY_PATH" ]; then
+              echo "✅ Directorio encontrado. Actualizando repositorio..."
+              cd "$DEPLOY_PATH"
+              git checkout production
+              git pull origin production
+            else
+              echo "🔵 Directorio no encontrado. Clonando repositorio..."
+              git clone --branch production "$REPO_URL" "$DEPLOY_PATH"
+              cd "$DEPLOY_PATH"
+            fi
+
+            # Paso 2: Crear/actualizar el archivo .env
+            echo "${ENV_FILE_CONTENT}" > .env
+            echo ".env file created successfully."
+
+            # Paso 3: Desplegar el frontend
+            echo "🎨 Desplegando archivos del frontend..."
+            docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.GHCR_TOKEN }}"
+            docker pull $FRONTEND_IMAGE
+            # Limpiar directorio web anterior y copiar los nuevos archivos
+            sudo rm -rf $WEB_ROOT/*
+            docker create --name temp-frontend $FRONTEND_IMAGE
+            docker cp temp-frontend:/app/dist/. $WEB_ROOT/
+            docker rm temp-frontend
+            echo "Frontend files deployed to $WEB_ROOT"
+
+            # Paso 4: Desplegar el backend y las bases de datos
+            echo "📦 Desplegando servicios de backend con Docker Compose..."
+            docker-compose -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Paso 5: Limpiar imágenes de Docker antiguas
+            echo "🧹 Limpiando imágenes no utilizadas..."
+            docker image prune -af
+
             echo "✅ Despliegue completado exitosamente!"
+        env:
+          ENV_FILE_CONTENT: ${{ steps.create_env.outputs.content }}
