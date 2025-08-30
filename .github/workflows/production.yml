@@ -124,6 +124,9 @@ jobs:
             echo "🎨 Desplegando archivos del frontend..."
             docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
             docker pull $FRONTEND_IMAGE
+            # Asegurarse de que no exista un contenedor temporal de un despliegue anterior
+            docker rm -f temp-frontend || true
+
             # Limpiar directorio web anterior y copiar los nuevos archivos
             sudo rm -rf $WEB_ROOT/*
             docker create --name temp-frontend $FRONTEND_IMAGE
@@ -133,8 +136,8 @@ jobs:
 
             # Paso 4: Desplegar el backend y las bases de datos
             echo "📦 Desplegando servicios de backend con Docker Compose..."
-            docker-compose -f docker-compose.prod.yml pull
-            docker-compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
             # Paso 5: Limpiar imágenes de Docker antiguas
             echo "🧹 Limpiando imágenes no utilizadas..."
