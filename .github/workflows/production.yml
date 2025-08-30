@@ -81,6 +81,10 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: 22
           script: |
+            # Exportar las variables de entorno para que estén disponibles en la sesión SSH
+            export DEPLOY_PATH=${{ secrets.PRODUCTION_PATH }}
+            export WEB_ROOT=${{ secrets.WEB_ROOT }}
+
             set -e # Exit immediately if a command exits with a non-zero status.
 
             # Verificación de seguridad para asegurar que las variables de ruta no estén vacías
@@ -91,7 +95,9 @@ jobs:
             fi
             
             REPO_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-            FRONTEND_IMAGE="ghcr.io/${{ github.repository_owner }}/alamesa/alamesa-frontend:production"
+            # Convert repository owner to lowercase for consistency
+            REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            FRONTEND_IMAGE="ghcr.io/$REPO_OWNER_LOWER/alamesa/alamesa-frontend:production"
 
             echo "🚀 Iniciando despliegue..."
 
@@ -108,7 +114,7 @@ jobs:
             fi
 
             # Paso 2: Crear/actualizar el archivo .env
-            echo "${ENV_FILE_CONTENT}" > .env
+            echo "${{ steps.create_env.outputs.content }}" > .env
             echo ".env file created successfully."
 
             # Paso 3: Desplegar el frontend
@@ -132,7 +138,3 @@ jobs:
             docker image prune -af
 
             echo "✅ Despliegue completado exitosamente!"
-        env:
-          ENV_FILE_CONTENT: ${{ steps.create_env.outputs.content }}
-          DEPLOY_PATH: ${{ secrets.PRODUCTION_PATH }}
-          WEB_ROOT: ${{ secrets.WEB_ROOT }}
