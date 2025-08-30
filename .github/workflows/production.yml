@@ -145,3 +145,5 @@ jobs:
             docker image prune -af
 
             echo "✅ Despliegue completado exitosamente!"
+        env:
+          ENV_FILE_CONTENT: ${{ steps.create_env.outputs.content }}
