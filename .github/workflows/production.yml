@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-production
     # Usamos el entorno 'production' para acceder a los secretos de forma segura
-    environment: production
+    # environment: production
     steps:
       - name: Create .env file content
         id: create_env
