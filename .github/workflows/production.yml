@@ -81,6 +81,13 @@ jobs:
           port: 22
           script: |
             set -e # Exit immediately if a command exits with a non-zero status.
+
+            # Verificación de seguridad para asegurar que las variables de ruta no estén vacías
+            if [ -z "$DEPLOY_PATH" ] || [ -z "$WEB_ROOT" ]; then
+              echo "❌ Error: La variable DEPLOY_PATH o WEB_ROOT está vacía."
+              echo "👉 Por favor, verifica que los secretos PRODUCTION_PATH y WEB_ROOT estén configurados como 'Repository secrets' en GitHub."
+              exit 1
+            fi
             
             # Las variables DEPLOY_PATH y WEB_ROOT se inyectan desde la sección 'env' de abajo.
             
@@ -126,5 +133,7 @@ jobs:
             docker image prune -af
 
             echo "✅ Despliegue completado exitosamente!"
+        env:
+          ENV_FILE_CONTENT: ${{ steps.create_env.outputs.content }}    echo "✅ Despliegue completado exitosamente!"
         env:
           ENV_FILE_CONTENT: ${{ steps.create_env.outputs.content }}
