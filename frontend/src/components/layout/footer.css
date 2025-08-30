@@ -1,0 +1,173 @@
+/* frontend/src/components/layout/footer.css */
+
+/* Estilos específicos para el footer */
+footer {
+  position: relative;
+  z-index: 10;
+}
+
+/* Efectos hover para los enlaces */
+footer button[onclick*="hash"] {
+  transition: color 0.3s ease;
+}
+
+footer button[onclick*="hash"]:hover {
+  color: var(--color-am-600);
+}
+
+/* Estilos para el input del newsletter */
+footer input[type="email"] {
+  transition: all 0.3s ease;
+}
+
+footer input[type="email"]:focus {
+  transform: scale(1.01);
+}
+
+/* Estilos para los botones sociales */
+footer button[onclick*="open"] {
+  transition: all 0.3s ease;
+}
+
+footer button[onclick*="open"]:hover {
+  transform: scale(1.05);
+}
+
+/* Animación para el botón de scroll to top */
+footer button[onclick*="scrollTo"] {
+  transition: all 0.3s ease;
+}
+
+footer button[onclick*="scrollTo"]:hover {
+  transform: scale(1.05);
+}
+
+/* Estilos para el botón de suscripción */
+footer button:not([onclick*="open"]):not([onclick*="scrollTo"]):not([onclick*="hash"]) {
+  transition: all 0.3s ease;
+}
+
+footer button:not([onclick*="open"]):not([onclick*="scrollTo"]):not([onclick*="hash"]):hover {
+  transform: scale(1.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  footer .grid {
+    gap: 2rem;
+  }
+  
+  footer .text-center {
+    text-align: center;
+  }
+  
+  footer .flex-col {
+    flex-direction: column;
+  }
+  
+  footer .space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+}
+
+/* Mejoras de accesibilidad */
+footer button:focus {
+  outline: 2px solid var(--color-am-500);
+  outline-offset: 2px;
+}
+
+footer input:focus {
+  outline: 2px solid var(--color-am-500);
+  outline-offset: 2px;
+}
+
+/* Efectos sutiles para elementos de contacto */
+footer .space-y-3 > div {
+  transition: all 0.3s ease;
+}
+
+footer .space-y-3 > div:hover {
+  transform: translateX(3px);
+}
+
+footer .space-y-3 > div:hover i {
+  color: var(--color-am-600);
+}
+
+/* Estilos para el logo del footer */
+footer .w-16.h-16 {
+  background: white;
+  border: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+footer .w-16.h-16 img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+footer .w-16.h-16:hover img {
+  transform: scale(1.1) translateZ(0);
+}
+
+/* Asegurar que el footer no interfiera con el menú del navbar */
+footer {
+  z-index: 10;
+  position: relative;
+}
+
+/* Estilos para el menú del navbar - asegurar que siempre sea visible */
+nav[class*="fixed z-[9999]"] {
+  z-index: 9999 !important;
+  position: fixed !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Estilos para los dropdowns de búsqueda */
+div[class*="fixed left-1/2"] {
+  z-index: 9999 !important;
+  position: fixed !important;
+  pointer-events: auto !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Estilos específicos para el menú del logo */
+nav[class*="fixed z-[9999]"] a {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  display: block !important;
+  width: 100% !important;
+  text-decoration: none !important;
+}
+
+nav[class*="fixed z-[9999]"] a:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* Asegurar que el menú del logo tenga prioridad */
+nav[class*="fixed z-[9999]"] {
+  pointer-events: auto !important;
+  user-select: none !important;
+  z-index: 9999 !important;
+}
+
+/* Prevenir que los enlaces del menú interfieran */
+nav[class*="fixed z-[9999]"] a[data-onclick] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
