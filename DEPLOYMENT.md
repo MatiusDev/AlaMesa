@@ -2,17 +2,17 @@
 
 Este documento describe el flujo de trabajo para el desarrollo, la integración continua y el despliegue de la aplicación AlaMesa.
 
-## 1. Gestión de Variables de Entorno
+## 1. Flujo de Desarrollo Local
 
-La configuración de la aplicación se gestiona a través de variables de entorno para mantener los secretos fuera del control de versiones y facilitar la configuración en diferentes ambientes.
+Para el desarrollo local, la aplicación se orquesta con Docker Compose para asegurar la paridad con el entorno de producción.
 
-### Archivo `.env`
+### Variables de Entorno (`.env`)
 
-Para el desarrollo local, todas las variables de entorno se definen en un archivo `.env` ubicado en la raíz del proyecto. **Este archivo está incluido en el `.gitignore` y no debe ser subido al repositorio.**
+La configuración local se gestiona en un archivo `.env` en la raíz del proyecto. **Este archivo está en `.gitignore` y no debe subirse al repositorio.**
 
 Un nuevo desarrollador debe crear su propio archivo `.env` basándose en la siguiente plantilla:
 
-```
+```env
 # Endpoints y Puertos
 SERVER_HOST=0.0.0.0
 SERVER_PORT=8000
@@ -35,51 +35,131 @@ OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxx
 ENVIRONMENT=dev
 ```
 
-## 2. Flujo de Desarrollo Local
+### Ejecución Local
 
-La forma recomendada para desarrollar es utilizando Docker Compose para asegurar la paridad entre el entorno de desarrollo y el de producción.
-
-### Archivos de Compose
-
-Se utilizan dos archivos para gestionar el entorno:
-
-- **`docker-compose.yml`**: Contiene la configuración base y común para todos los entornos (definición de servicios, redes, dependencias).
-- **`docker-compose.override.yml`**: Contiene la configuración **exclusiva para desarrollo**. Este archivo es ignorado por Git y no se usa en producción. Activa la recarga automática del backend y establece `ENVIRONMENT=dev`.
-
-### Ejecución
-
-Para levantar todo el entorno de desarrollo (backend, frontend y bases de datos), simplemente ejecuta:
+Para levantar todo el entorno de desarrollo (backend, frontend y bases de datos), ejecuta:
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
-Docker Compose leerá y combinará automáticamente ambos archivos. Gracias a los volúmenes definidos en el `override`, cualquier cambio en el código fuente se reflejará al instante en los contenedores.
+Gracias a los volúmenes definidos, cualquier cambio en el código fuente se reflejará al instante en los contenedores.
 
-## 3. Pipeline de CI/CD con GitHub Actions
+## 2. Pipelines de CI/CD (GitHub Actions)
 
-El repositorio está configurado con un pipeline de Integración Continua definido en `.github/workflows/ci.yml`.
+El repositorio utiliza GitHub Actions para la integración y el despliegue continuo.
 
-### Disparadores (Triggers)
+### a. Workflow de Desarrollo (`development.yml`)
 
-El workflow se ejecuta automáticamente en los siguientes eventos:
+- **Disparador:** Se activa en cada `push` a la rama `development`.
+- **Acción:** Construye las imágenes de Docker para el `backend` y el `frontend` y las publica en el registro de contenedores de GitHub (`ghcr.io`) con la etiqueta `development`.
 
-- `push` a la rama `development`.
-- `pull_request` que apunta a la rama `development`.
+### b. Workflow de Producción (`production.yml`)
 
-### Registro de Contenedores: ghcr.io
+- **Disparador:** Se activa en cada `push` a la rama `production`.
+- **Acción:** Despliega la última versión de la aplicación en el servidor de producción (VPS).
 
-Este proyecto utiliza **GitHub Container Registry (`ghcr.io`)** para almacenar las imágenes de Docker, en lugar de Docker Hub.
+## 3. Configuración para Despliegue en Producción
 
-- **Autenticación Automática:** El pipeline se autentica de forma segura y automática utilizando un `GITHUB_TOKEN` que GitHub Actions genera en cada ejecución. No es necesario gestionar secretos de Docker Hub.
-- **Nomenclatura de Imágenes:** Las imágenes se nombran siguiendo el patrón `ghcr.io/PROPIETARIO_DEL_REPO/NOMBRE_DEL_REPO/NOMBRE_IMAGEN:latest`.
+Esta sección es una guía completa para configurar un servidor VPS desde cero y desplegar la aplicación.
 
-### Funcionamiento
+### 3.1. Secretos de Repositorio en GitHub
 
-El pipeline realiza los siguientes pasos:
+El pipeline de producción necesita los siguientes secretos configurados en **Settings > Secrets and variables > Actions** (en el entorno `production`):
 
-1.  Inicia sesión en `ghcr.io`.
-2.  Construye las imágenes de Docker para el `backend` y el `frontend`.
-3.  Publica (hace `push`) de las imágenes construidas en `ghcr.io`.
+- `PRODUCTION_HOST`: La dirección IP del servidor VPS.
+- `PRODUCTION_USER`: El nombre de usuario para conectarse por SSH (ej. `ubuntu`, `root`).
+- `PRODUCTION_SSH_KEY`: La clave SSH privada para acceder al servidor.
+- `WEB_ROOT`: La ruta absoluta en el servidor donde se alojarán los archivos del frontend (ej. `/var/www/reservasalamesa.shop`).
+- `MONGODB_URI`, `POSTGRES_DB`, etc.: Todas las demás variables de la aplicación para el entorno de producción.
 
-Una vez finalizado, las imágenes estarán disponibles en la sección **"Packages"** de la página del repositorio en GitHub.
+### 3.2. Configuración Inicial del Servidor (VPS)
+
+#### a. Firewall
+
+Se deben configurar las siguientes reglas de **entrada (Incoming)** en el firewall del servidor para permitir el tráfico web:
+
+1.  **Permitir HTTP (Puerto 80):**
+    - **Uso:** Necesario para la validación inicial de Let's Encrypt y para redirigir a los usuarios a la versión segura del sitio.
+    - **Regla:** Permitir tráfico de **entrada** por `TCP` en el puerto `80` desde `Cualquier Origen`.
+
+2.  **Permitir HTTPS (Puerto 443):**
+    - **Uso:** Permite el acceso al sitio web de forma segura.
+    - **Regla:** Permitir tráfico de **entrada** por `TCP` en el puerto `443` desde `Cualquier Origen`.
+
+Adicionalmente, asegúrate de que el tráfico de **salida (Outgoing)** por `TCP` en el puerto `443` esté permitido para que el servidor pueda clonar el repositorio desde GitHub.
+
+#### b. Software Requerido
+
+Asegúrate de que en el servidor estén instalados:
+- **Docker**
+- **Docker Compose** (V2, se invoca con `docker compose`)
+- **Nginx**
+
+#### c. Configuración de Nginx
+
+Crea o edita el archivo de configuración del sitio (ej. `/etc/nginx/sites-enabled/default`) para que apunte a la carpeta del frontend y gestione correctamente las rutas de la SPA (React).
+
+```nginx
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    # Ruta donde el pipeline copia los archivos del frontend
+    root /var/www/reservasalamesa.shop; # <- Reemplazar con tu WEB_ROOT
+
+    index index.html;
+
+    server_name reservasalamesa.shop www.reservasalamesa.shop; # <- Reemplazar con tu dominio
+
+    location / {
+        # Redirige todas las peticiones a index.html para que React Router funcione
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+Después de editar, verifica y recarga la configuración:
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### 3.3. Configuración de DNS
+
+En tu proveedor de dominio, crea **dos registros de tipo "A"** que apunten a la IP de tu servidor:
+
+1.  **Registro Raíz:**
+    - **Tipo:** `A`
+    - **Host:** `@`
+    - **Valor:** La IP de tu VPS.
+
+2.  **Registro `www`:**
+    - **Tipo:** `A`
+    - **Host:** `www`
+    - **Valor:** La IP de tu VPS.
+
+### 3.4. Certificado SSL (HTTPS) con Certbot
+
+Para asegurar el sitio con `https://`, se usa Let's Encrypt y Certbot.
+
+1.  **Instalar Certbot:**
+    ```bash
+    sudo snap install core; sudo snap refresh core
+    sudo snap install --classic certbot
+    sudo ln -s /snap/bin/certbot /usr/bin/certbot
+    ```
+
+2.  **Obtener y Configurar el Certificado:**
+    Este comando obtiene el certificado, lo instala y modifica Nginx automáticamente para usarlo y forzar la redirección a HTTPS.
+    ```bash
+    sudo certbot --nginx -d reservasalamesa.shop -d www.reservasalamesa.shop # <- Reemplazar con tu dominio
+    ```
+    - Sigue las instrucciones: proporciona un email y acepta los términos.
+    - Cuando pregunte si deseas redirigir HTTP a HTTPS, **selecciona la opción 2 (Redirect)**.
+
+3.  **Verificar Renovación Automática:**
+    Certbot se encarga de renovar el certificado automáticamente. Puedes verificar que el proceso de renovación está bien configurado con:
+    ```bash
+    sudo certbot renew --dry-run
+    ```
+    Si no hay errores, no necesitas hacer nada más.
