@@ -84,6 +84,7 @@ jobs:
             # Exportar las variables de entorno para que estén disponibles en la sesión SSH
             export DEPLOY_PATH=${{ secrets.PRODUCTION_PATH }}
             export WEB_ROOT=${{ secrets.WEB_ROOT }}
+            export IMAGE_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
 
             set -e # Exit immediately if a command exits with a non-zero status.
 

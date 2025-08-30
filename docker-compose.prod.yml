@@ -4,7 +4,7 @@
 
 services:
   backend:
-    image: ghcr.io/the-matius/alamesa/alamesa-backend:production
+    image: ghcr.io/${IMAGE_OWNER}/alamesa/alamesa-backend:production
     restart: always
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
