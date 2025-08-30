@@ -1,14 +1,13 @@
-# docker-compose.yml - CONFIGURACIÓN PARA DESARROLLO LOCAL
-# Este archivo construye las imágenes localmente y monta los volúmenes de código para hot-reloading.
-# Se invoca con: docker-compose up
+# docker-compose.prod.yml
+# Este archivo está optimizado para producción y SOLO gestiona el backend y las bases de datos.
+# El frontend se despliega directamente en el Nginx del host.
 
 services:
   backend:
-    build: ./backend
+    image: ghcr.io/the-matius/alamesa/alamesa-backend:production
+    restart: always
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
-    volumes:
-      - ./backend:/app # Monta el código para reflejar cambios en tiempo real
     environment:
       MONGODB_URI: ${MONGODB_URI}
       POSTGRES_HOST: postgresql
@@ -17,7 +16,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       SERVER_HOST: ${SERVER_HOST}
       SERVER_PORT: ${SERVER_PORT}
-      ENVIRONMENT: ${ENVIRONMENT:-dev} # Default to dev
+      ENVIRONMENT: production
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     depends_on:
       mongodb:
@@ -26,11 +25,10 @@ services:
         condition: service_healthy
     networks:
       - alamesa-network
-    
+
   mongodb:
     image: mongo:latest
-    ports:
-      - "27017:27017"
+    restart: always
     volumes:
       - mongodb_data:/data/db
     environment:
@@ -43,11 +41,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   postgresql:
     image: postgres:13
-    ports:
-      - "5432:5432"
+    restart: always
     volumes:
       - postgresql_data:/var/lib/postgresql/data
     environment:
@@ -61,17 +58,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:80" # Se usa el puerto 5173 de Vite para desarrollo
-    volumes:
-      - ./frontend/src:/app/src # Monta solo el código fuente para hot-reloading
-    depends_on:
-      - backend
-    networks:
-      - alamesa-network
 
 volumes:
   mongodb_data:
