@@ -146,4 +146,6 @@ jobs:
 
             echo "✅ Despliegue completado exitosamente!"
         env:
+          ENV_FILE_CONTENT: ${{ steps.create_env.outputs.content }}    echo "✅ Despliegue completado exitosamente!"
+        env:
           ENV_FILE_CONTENT: ${{ steps.create_env.outputs.content }}
