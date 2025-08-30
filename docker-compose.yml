@@ -20,8 +20,10 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-dev} # Default to dev
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     depends_on:
-      - mongodb
-      - postgresql
+      mongodb:
+        condition: service_healthy
+      postgresql:
+        condition: service_healthy
     networks:
       - alamesa-network
     
@@ -36,6 +38,11 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     networks:
       - alamesa-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   
   postgresql:
     image: postgres:13
@@ -49,6 +56,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     networks:
       - alamesa-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   
   frontend:
     build: ./frontend
