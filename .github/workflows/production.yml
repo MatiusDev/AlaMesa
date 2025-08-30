@@ -127,7 +127,7 @@ jobs:
             # Limpiar directorio web anterior y copiar los nuevos archivos
             sudo rm -rf $WEB_ROOT/*
             docker create --name temp-frontend $FRONTEND_IMAGE
-            docker cp temp-frontend:/app/dist/. $WEB_ROOT/
+            docker cp temp-frontend:/usr/share/nginx/html/. $WEB_ROOT/
             docker rm temp-frontend
             echo "Frontend files deployed to $WEB_ROOT"
 
