@@ -1,0 +1,30 @@
+name: Pull Request Checks
+on:
+  pull_request:
+    branches: [development, production]
+
+jobs:
+  basic-checks:
+    name: Basic Code Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check Python syntax
+        run: |
+          cd backend
+          python -m py_compile main.py
+          python -m py_compile core/**/*.py
+
+      - name: Check file structure
+        run: |
+          echo "✅ Verificando estructura del proyecto..."
+          ls -la backend/
+          ls -la frontend/
+
+      - name: Check Dockerfiles exist
+        run: |
+          echo "✅ Verificando Dockerfiles..."
+          test -f backend/Dockerfile && echo "Backend Dockerfile ✅" || echo "❌ Backend Dockerfile missing"
+          test -f frontend/Dockerfile && echo "Frontend Dockerfile ✅" || echo "❌ Frontend Dockerfile missing"

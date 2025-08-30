@@ -1,9 +1,7 @@
 import os
 import motor.motor_asyncio
-from dotenv import load_dotenv
-
-# Cargar las variables de entorno del archivo .env
-load_dotenv()
+from typing import Annotated
+from fastapi import Depends
 
 class MongoDriver:
     """
@@ -44,12 +42,36 @@ class MongoDriver:
         else:
             raise ConnectionError("El cliente de MongoDB no ha sido inicializado.")
 
+    async def close(self):
+        """Cierra la conexión con MongoDB"""
+        if self._client:
+            self._client.close()
+            print("Conexión a MongoDB cerrada.")
+
 # Instancia única del driver para ser importada en otras partes de la aplicación
 db_driver = MongoDriver()
 
-# Ejemplo de cómo se usaría en otro archivo:
-# from backend.core.database.mongodb_driver import db_driver
-#
-# async def alguna_funcion():
-#     db = db_driver.get_database()
-#     # ... hacer operaciones con la base de datos
+# Dependencia para obtener la base de datos de MongoDB
+async def get_mongodb_db():
+    """Dependencia de FastAPI para obtener la base de datos de MongoDB"""
+    db = db_driver.get_database()
+    try:
+        yield db
+    finally:
+        # No cerramos la conexión aquí ya que es una instancia singleton
+        pass
+
+# Función para inicializar MongoDB (verificar conexión)
+async def init_mongodb():
+    """Verifica la conexión a MongoDB"""
+    try:
+        db = db_driver.get_database()
+        # Hacer una operación simple para verificar la conexión
+        await db.command("ping")
+        print("Conexión a MongoDB verificada correctamente")
+    except Exception as e:
+        print(f"Error al conectar con MongoDB: {e}")
+        raise
+
+# Tipo anotado para la inyección de dependencia de MongoDB
+SMongoDB = Annotated[motor.motor_asyncio.AsyncIOMotorDatabase, Depends(get_mongodb_db)]

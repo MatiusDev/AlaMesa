@@ -7,4 +7,5 @@ openai==1.101.0
 email-validator==2.3.0
 sqlmodel==0.0.24
 asyncpg==0.29.0
+pymongo==4.6.1
 motor==3.5.0

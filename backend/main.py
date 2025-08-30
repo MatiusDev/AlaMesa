@@ -11,12 +11,14 @@ load_dotenv(dotenv_path=env_path)
 
 from core.router import routes as api_routes
 from core.database.connection import init_db
+from core.database.mongodb_driver import init_mongodb
 
 app = FastAPI()
 
 @app.on_event("startup")
 async def on_startup():
     await init_db()
+    await init_mongodb()
 
 app.include_router(api_routes, prefix="/api")
 
