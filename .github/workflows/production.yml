@@ -21,6 +21,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Convert repository name to lowercase
+        id: string
+        run: echo "repository_lowercase=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Build and push production images
         uses: docker/build-push-action@v4
         with:
@@ -28,9 +32,9 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/alamesa-backend:production
-            ghcr.io/${{ github.repository }}/alamesa-backend:latest
-            ghcr.io/${{ github.repository }}/alamesa-backend:${{ github.sha }}
+            ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-backend:production
+            ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-backend:latest
+            ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-backend:${{ github.sha }}
 
       - name: Build and push frontend production
         uses: docker/build-push-action@v4
@@ -39,9 +43,9 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/alamesa-frontend:production
-            ghcr.io/${{ github.repository }}/alamesa-frontend:latest
-            ghcr.io/${{ github.repository }}/alamesa-frontend:${{ github.sha }}
+            ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:production
+            ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:latest
+            ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:${{ github.sha }}
 
   deploy-production:
     name: Deploy to Production Server
