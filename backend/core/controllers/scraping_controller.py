@@ -14,7 +14,7 @@ async def scrape_and_analyze(
     site: str = Path(..., title="El sitio a scrapear", description="Ej: tripadvisor"),
 ):
   try:
-    analysis_result = await analyzer.analyze_restaurant(scraper)
+    analysis_result = await analyzer.analyze_restaurant(scraper, site)
     
     return {
       "message": "Análisis completado con éxito",
