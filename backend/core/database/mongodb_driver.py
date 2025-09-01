@@ -15,30 +15,38 @@ class MongoDriver:
     def __init__(self):
         """
         Inicializa la conexión con la base de datos.
-        Lee la URI de conexión de las variables de entorno.
+        Construye la URI de conexión a partir de variables de entorno individuales.
         """
         if MongoDriver._client is None:
-            MONGO_URI = os.getenv("MONGODB_URI")
-            if not MONGO_URI:
-                raise ValueError("No se encontró la variable de entorno MONGODB_URI. Asegúrate de que esté definida en tu archivo .env")
+            user = os.getenv("MONGO_INITDB_ROOT_USERNAME")
+            password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
+            db_name = os.getenv("MONGO_DB")
+            
+            if not all([user, password, db_name]):
+                raise ValueError("Asegúrate de que las variables de entorno MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD y MONGO_DB estén definidas.")
+
+            # Construimos la URI dinámicamente
+            MONGO_URI = f"mongodb://{user}:{password}@mongodb:27017/{db_name}?authSource=admin"
             
             print("Inicializando cliente de MongoDB...")
             MongoDriver._client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
             print("Cliente de MongoDB inicializado.")
 
-    def get_database(self, db_name: str = "alamesa_db"):
+    def get_database(self, db_name: str = None):
         """
         Obtiene una referencia a una base de datos específica.
 
         Args:
-            db_name (str): El nombre de la base de datos a la que conectar. 
-                           Por defecto es 'alamesa_db'.
+            db_name (str, optional): El nombre de la base de datos. 
+                                     Si es None, usa el nombre de la variable de entorno MONGO_DB.
 
         Returns:
             La base de datos de Motor.
         """
         if self._client:
-            return self._client[db_name]
+            # Si no se especifica un nombre, usa el de la variable de entorno como default.
+            effective_db_name = db_name or os.getenv("MONGO_DB")
+            return self._client[effective_db_name]
         else:
             raise ConnectionError("El cliente de MongoDB no ha sido inicializado.")
 

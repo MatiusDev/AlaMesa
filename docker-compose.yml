@@ -10,7 +10,9 @@ services:
     volumes:
       - ./backend:/app # Monta el código para reflejar cambios en tiempo real
     environment:
-      MONGODB_URI: ${MONGODB_URI}
+      MONGO_DB: ${MONGO_DB}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       POSTGRES_HOST: postgresql
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -26,6 +28,7 @@ services:
         condition: service_healthy
     networks:
       - alamesa-network
+    command: ["python", "main.py"]
     
   mongodb:
     image: mongo:latest
@@ -33,9 +36,11 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+      - ./.docker/mongo/keyfile:/etc/mongo/keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    command: sh -c "chmod 400 /etc/mongo/keyfile && mongod --bind_ip_all --replSet rs0 --keyFile /etc/mongo/keyfile"
     networks:
       - alamesa-network
     healthcheck:

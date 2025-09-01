@@ -2,11 +2,12 @@ import openai
 import json
 import os
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from typing import Annotated
 
 from core.utils.constants.prompts import PROMPTS
 from core.database.mongodb_driver import SMongoDB
+from core.utils.matching import find_similar_restaurant
 
 _openai_client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -33,15 +34,42 @@ class AgentAIService:
       print("---------------------------------")
 
       response = json.loads(response.choices[0].message.content)
-      
-      #print(response)
-      #mongo_content = {
-      #  "name": response["name"],
-      #  f"{site}": response
-      #}
-      # await self.mongodb["Restaurant"].insert_one(mongo_content)
+
+      restaurant_name = response.get("name")
+      if not restaurant_name:
+          # No podemos continuar si no hay nombre
+          return response
+
+      # Busca una coincidencia similar antes de guardar
+      collection = self.mongodb["Restaurant"]
+      matched_restaurant = await find_similar_restaurant(restaurant_name, collection)
+
+      if matched_restaurant:
+          # Si hay match, usamos su nombre y _id para actualizar
+          print(f"Actualizando el restaurante existente '{matched_restaurant['name']}'")
+          query = {"_id": matched_restaurant["_id"]}
+          # Actualizamos el nombre por si el nuevo es ligeramente mejor y añadimos los datos del sitio
+          update_data = {"$set": {"name": restaurant_name, f"{site}": response}}
+      else:
+          # Si no hay match, preparamos para insertar un nuevo documento
+          print(f"No se encontraron coincidencias. Creando nuevo restaurante '{restaurant_name}'")
+          query = {"name": restaurant_name} # Usamos el nombre para el upsert inicial
+          update_data = {"$set": {"name": restaurant_name, f"{site}": response}}
+
+      await collection.update_one(query, update_data, upsert=True)
+      print(f"Restaurante '{restaurant_name}' guardado/actualizado en MongoDB.")
 
       return response
+    except openai.APIError as e:
+      error_message = "Error en la petición a la API de OpenAI."
+      if (e.body):
+        type_error = e.body.get('type')
+        
+        if (type_error == "insufficient_quota"):
+          error_message = "Token no tiene fondos suficientes para realizar la petición."
+        elif (type_error == "invalid_request_error"):
+          error_message = "APIKEY inválida o petición malformada."
+      raise HTTPException(status_code=500, detail=f"Error al procesar con OpenAI: {error_message}")
     except Exception as e:
       raise Exception(status_code=500, detail=f"Error al procesar con OpenAI: {str(e)}")
     

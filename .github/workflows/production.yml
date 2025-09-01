@@ -60,7 +60,7 @@ jobs:
         id: create_env
         run: |
           echo "content<<EOF" >> $GITHUB_OUTPUT
-          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> $GITHUB_OUTPUT
+          echo "MONGO_DB=${{ secrets.MONGO_DB }}" >> $GITHUB_OUTPUT
           echo "POSTGRES_HOST=postgresql" >> $GITHUB_OUTPUT
           echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> $GITHUB_OUTPUT
           echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> $GITHUB_OUTPUT
@@ -121,6 +121,12 @@ jobs:
             echo "${{ steps.create_env.outputs.content }}" > .env
             echo ".env file created successfully."
 
+            # Paso 2.1: Crear el keyfile de MongoDB desde el secreto
+            echo "🔑 Creando archivo de clave para MongoDB..."
+            mkdir -p .docker/mongo
+            echo "${{ secrets.MONGO_KEYFILE }}" > .docker/mongo/keyfile
+            echo "Keyfile creado exitosamente."
+
             # Paso 3: Desplegar el frontend
             echo "🎨 Desplegando archivos del frontend..."
             docker login ghcr.io -u ${{ github.actor }} --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
@@ -139,6 +145,12 @@ jobs:
             echo "📦 Desplegando servicios de backend con Docker Compose..."
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Paso 4.1: Iniciar el Replica Set de MongoDB
+            echo "⏳ Esperando a que MongoDB se inicie..."
+            sleep 15 # Dar tiempo a que el contenedor de MongoDB se estabilice
+            echo "⚙️ Iniciando Replica Set de MongoDB (se ignora si ya está iniciado)..."
+            docker compose -f docker-compose.prod.yml exec -T mongodb mongosh --eval "rs.initiate()" || echo "Replica set ya iniciado, continuando."
 
             # Paso 5: Limpiar imágenes de Docker antiguas
             echo "🧹 Limpiando imágenes no utilizadas..."

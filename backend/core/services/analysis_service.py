@@ -11,7 +11,7 @@ class AnalysisService:
   def __init__(self, ai_service: SAgentAIService):
     self.ai_service = ai_service
 
-  async def analyze_restaurant(self, scraper: ScrapingInterface) -> Dict[str, Any]:
+  async def analyze_restaurant(self, scraper: ScrapingInterface, site: str) -> Dict[str, Any]:
     """
     Orquesta el proceso completo de scraping y análisis de un restaurante.
     """
@@ -29,7 +29,7 @@ class AnalysisService:
       if not details:
         raise HTTPException(status_code=404, detail="No se encontraron detalles para el restaurante.")
 
-      structured_data = await self.ai_service.format_to_json(details['detail_text'])
+      structured_data = await self.ai_service.format_to_json(details['detail_text'], site)
       
       if not structured_data:
         raise HTTPException(status_code=500, detail="El modelo no pudo procesar la información.")
@@ -38,7 +38,10 @@ class AnalysisService:
         "restaurant_data": structured_data,
         "image_urls": details['image_urls']
       }
+    except HTTPException as e:
+      raise e
     except Exception as e:
+      print(f"Error inesperado en AnalysisService: {e}")
       raise HTTPException(status_code=500, detail=f"Error durante el análisis del restaurante: {str(e)}")
 
 SAnalysisService = Annotated[AnalysisService, Depends(AnalysisService)]

@@ -258,3 +258,8 @@ web_modules/
 # Vite
 /frontend/dist
 /frontend/dist-ssr
+
+
+# Docker-specific secrets
+# Ignore the MongoDB keyfile
+.docker/mongo/keyfile

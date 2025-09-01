@@ -9,7 +9,9 @@ services:
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
     environment:
-      MONGODB_URI: ${MONGODB_URI}
+      MONGO_DB: ${MONGO_DB}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       POSTGRES_HOST: postgresql
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -31,9 +33,11 @@ services:
     restart: always
     volumes:
       - mongodb_data:/data/db
+      - ./.docker/mongo/keyfile:/etc/mongo/keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    command: sh -c "chmod 400 /etc/mongo/keyfile && mongod --bind_ip_all --replSet rs0 --keyFile /etc/mongo/keyfile"
     networks:
       - alamesa-network
     ports:

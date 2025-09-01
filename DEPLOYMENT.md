@@ -24,7 +24,7 @@ POSTGRES_USER=alamesa_user
 POSTGRES_PASSWORD=alamesa_password
 
 # Base de Datos - MongoDB
-MONGODB_URI=mongodb://mongodb:27017/alamesa_db
+MONGO_DB=alamesa_db
 MONGO_INITDB_ROOT_USERNAME=alamesa_user
 MONGO_INITDB_ROOT_PASSWORD=alamesa_password
 
@@ -71,7 +71,12 @@ El pipeline de producción necesita los siguientes secretos configurados en **Se
 - `PRODUCTION_USER`: El nombre de usuario para conectarse por SSH (ej. `ubuntu`, `root`).
 - `PRODUCTION_SSH_KEY`: La clave SSH privada para acceder al servidor.
 - `WEB_ROOT`: La ruta absoluta en el servidor donde se alojarán los archivos del frontend (ej. `/var/www/reservasalamesa.shop`).
-- `MONGODB_URI`, `POSTGRES_DB`, etc.: Todas las demás variables de la aplicación para el entorno de producción.
+- `MONGO_DB`: El nombre de la base de datos de MongoDB (ej. `alamesa_prod_db`).
+- `MONGO_INITDB_ROOT_USERNAME`: El usuario administrador de MongoDB.
+- `MONGO_INITDB_ROOT_PASSWORD`: La contraseña del administrador de MongoDB.
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: Las credenciales de la base de datos PostgreSQL.
+- `OPENAI_API_KEY`: La clave de la API de OpenAI.
+- `SERVER_HOST`, `SERVER_PORT`: El host y puerto para el servidor backend.
 
 ### 3.2. Configuración Inicial del Servidor (VPS)
 

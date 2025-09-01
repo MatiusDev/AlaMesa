@@ -1,5 +1,6 @@
 import os
 import uvicorn
+import asyncio
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -12,7 +13,8 @@ load_dotenv(dotenv_path=env_path)
 
 from core.router import routes as api_routes
 from core.database.connection import init_db
-from core.database.mongodb_driver import init_mongodb
+from core.database.mongodb_driver import init_mongodb, db_driver
+from core.services.background.change_stream_service import listen_for_official_restaurants
 
 app = FastAPI()
 
@@ -29,6 +31,11 @@ app.add_middleware(
 async def on_startup():
     await init_db()
     await init_mongodb()
+    
+    # Iniciar el listener del Change Stream en segundo plano
+    print("Iniciando tareas de background en el evento startup...")
+    db = db_driver.get_database()
+    asyncio.create_task(listen_for_official_restaurants(db))
 
 app.include_router(api_routes, prefix="/api")
 
