@@ -1,5 +1,6 @@
 // frontend/src/components/layout/Navbar.js
 import { clearUserData } from '@utils/localStorage.js';
+import { getRestaurants } from '@api/restaurantService.js';
 
 const Navbar = () => {
   const state = {
@@ -8,8 +9,10 @@ const Navbar = () => {
     cuisine: '',
     date: '',
     time: '',
+    partySize: '',
     tempDate: '',
     tempTime: '',
+    tempPartySize: '',
     calendarCursor: new Date().toISOString(),
     menuOpen: false,
     openField: null, // 'restaurant' | 'location' | 'cuisine' | 'datetime'
@@ -21,7 +24,14 @@ const Navbar = () => {
     menuPosition: 'below', // 'above' | 'below'
     showFeedback: false,
     feedbackMessage: '',
+    restaurants: [],
+    allLocations: [],
+    allCuisines: [],
+    showSearchSuggestions: false,
   };
+
+  // Cargar restaurantes al inicializar
+  setTimeout(() => actions.loadRestaurants(), 100);
 
   const actions = {
     updateQuery: (e) => { state.query = e.target.value; },
@@ -29,6 +39,19 @@ const Navbar = () => {
     updateCuisine: (e) => { state.cuisine = e.target.value; },
     updateDateTemp: (e) => { state.tempDate = e.target.value; },
     updateTimeTemp: (e) => { state.tempTime = e.target.value; },
+    
+    // Cargar restaurantes desde la API
+    loadRestaurants: async () => {
+      try {
+        const data = await getRestaurants();
+        state.restaurants = data || [];
+        // Extraer ubicaciones y tipos de cocina �nicos
+        state.allLocations = [...new Set(data.map(r => r.city).filter(Boolean))].sort();
+        state.allCuisines = [...new Set(data.flatMap(r => r.restaurant_type || []).filter(Boolean))].sort();
+      } catch (error) {
+        console.error('Error cargando restaurantes en Navbar:', error);
+      }
+    },
     onScroll: () => {
       // Solo cerrar el menú al hacer scroll para evitar problemas de posicionamiento
       if (state.menuOpen) {
@@ -44,6 +67,7 @@ const Navbar = () => {
         cuisine: state.cuisine || '',
         date: state.date || '',
         time: state.time || '',
+        partySize: state.partySize || '',
       });
       window.location.hash = `#/restaurants?${params.toString()}`;
       state.expanded = false;
@@ -55,8 +79,10 @@ const Navbar = () => {
       state.cuisine = '';
       state.date = '';
       state.time = '';
+      state.partySize = '';
       state.tempDate = '';
       state.tempTime = '';
+      state.tempPartySize = '';
     },
     toggleMenu: () => {
       // Si el menú está cerrando, no hacer nada
@@ -132,26 +158,20 @@ const Navbar = () => {
       state.openField = null; 
       state.expanded = false; 
     },
-    clearAllSelections: () => {
-      // Limpiar todos los campos seleccionados
-      state.query = '';
-      state.location = '';
-      state.cuisine = '';
-      state.date = '';
-      state.time = '';
-      state.tempDate = '';
-      state.tempTime = '';
-      state.openField = null;
-      state.expanded = false;
-      
-      // Mostrar feedback de limpieza
+    clearAllSelections: () => { 
+      state.query = ''; 
+      state.location = ''; 
+      state.cuisine = ''; 
+      state.date = ''; 
+      state.time = ''; 
+      state.partySize = '';
+      state.tempDate = ''; 
+      state.tempTime = ''; 
+      state.tempPartySize = '';
+      // Mostrar feedback
       state.showFeedback = true;
-      state.feedbackMessage = 'Todas las selecciones han sido limpiadas';
-      
-      // Ocultar feedback después de 2 segundos
-      setTimeout(() => {
-        state.showFeedback = false;
-      }, 2000);
+      state.feedbackMessage = 'Todas las selecciones limpiadas';
+      setTimeout(() => { state.showFeedback = false; }, 1500);
     },
     closeSearchDropdowns: () => {
       state.openField = null;
@@ -160,9 +180,10 @@ const Navbar = () => {
     toggleRestaurant: () => { state.expanded = true; state.openField = state.openField === 'restaurant' ? null : 'restaurant'; },
     toggleLocation: () => { state.expanded = true; state.openField = state.openField === 'location' ? null : 'location'; },
     toggleCuisine: () => { state.expanded = true; state.openField = state.openField === 'cuisine' ? null : 'cuisine'; },
-    toggleDatetime: () => {
+    toggleReservation: () => {
       state.tempDate = state.date;
       state.tempTime = state.time;
+      state.tempPartySize = state.partySize;
       state.expanded = true;
       state.openField = state.openField === 'datetime' ? null : 'datetime';
       // Ajustar el cursor del calendario al mes actual o al de la fecha seleccionada
@@ -236,29 +257,29 @@ const Navbar = () => {
     clearDatetime: () => { 
       state.tempDate = ''; 
       state.tempTime = ''; 
+      state.tempPartySize = '';
       // Mostrar feedback
       state.showFeedback = true;
-      state.feedbackMessage = 'Fecha y hora limpiadas';
+      state.feedbackMessage = 'Reserva limpiada';
       setTimeout(() => { state.showFeedback = false; }, 1500);
     },
     applyDatetime: () => { 
       state.date = state.tempDate; 
       state.time = state.tempTime; 
+      state.partySize = state.tempPartySize;
       state.openField = null; 
       // Mantener expanded para que se vea la selección
       setTimeout(() => {
         state.expanded = false;
-      }, 100);
+      }, 300);
     },
     clearDateTimeInline: () => { 
       state.date = ''; 
       state.time = ''; 
-      state.openField = null;
-      state.expanded = false;
-      
+      state.partySize = '';
       // Mostrar feedback
       state.showFeedback = true;
-      state.feedbackMessage = 'Fecha y hora limpiadas';
+      state.feedbackMessage = 'Reserva limpiada';
       setTimeout(() => { state.showFeedback = false; }, 1500);
     },
     openSearch: () => { state.expanded = true; },
@@ -283,10 +304,32 @@ const Navbar = () => {
       state.tempDate = `${dd}/${mm}/${yyyy}`;
     },
     selectTimeChip: (e) => { state.tempTime = e.currentTarget.dataset.time || ''; },
+    updateTimeInput: (e) => { state.tempTime = e.target.value || ''; },
+    selectPartySize: (e) => { state.tempPartySize = e.currentTarget.dataset.size || ''; },
     gotoAuth: () => { window.location.hash = '#/auth'; },
     gotoHome: () => { window.location.hash = '#/'; },
     gotoRestaurants: () => { window.location.hash = '#/restaurants'; },
+    getRestaurantSuggestions: () => {
+      // Aquí iría la lógica para obtener sugerencias de restaurantes
+      // Por ejemplo, desde una API o un archivo de datos
+      // Para este ejemplo, devolvemos un array de objetos simulados
+      return [
+        { name: 'Restaurante A', restaurant_type: ['Restaurante', 'Internacional'], city: 'Medellín' },
+        { name: 'Restaurante B', restaurant_type: ['Restaurante', 'Colombiano'], city: 'Envigado' },
+        { name: 'Restaurante C', restaurant_type: ['Restaurante', 'Italiano'], city: 'Itagüí' },
+        { name: 'Restaurante D', restaurant_type: ['Restaurante', 'Japonesa'], city: 'Sabaneta' },
+        { name: 'Restaurante E', restaurant_type: ['Restaurante', 'Colombiano'], city: 'El Poblado' },
+        { name: 'Restaurante F', restaurant_type: ['Restaurante', 'Internacional'], city: 'Medellín' },
+        { name: 'Restaurante G', restaurant_type: ['Restaurante', 'Colombiano'], city: 'Envigado' },
+        { name: 'Restaurante H', restaurant_type: ['Restaurante', 'Italiano'], city: 'Itagüí' },
+        { name: 'Restaurante I', restaurant_type: ['Restaurante', 'Japonesa'], city: 'Sabaneta' },
+        { name: 'Restaurante J', restaurant_type: ['Restaurante', 'Colombiano'], city: 'El Poblado' },
+      ];
+    },
   };
+
+  // Cargar restaurantes al inicializar
+  setTimeout(() => actions.loadRestaurants(), 100);
 
   const view = () => {
     const dropdownTop = 'top-20';
@@ -311,7 +354,7 @@ const Navbar = () => {
       const key = `${dd}/${mm}/${year}`;
       cells.push({ inMonth, iso: date.toISOString(), label: inMonth ? String(dayNum) : '', key });
     }
-    const times = ['12:00','13:00','14:00','19:00','20:00','21:00'];
+    // No necesitamos times fijo ya que ahora es un input libre
     return `
     <header class="fixed inset-x-0 top-0 z-50 bg-white/90 backdrop-blur border-b border-neutral-200/60 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] h-20">
       ${state.showFeedback ? `
@@ -341,10 +384,22 @@ const Navbar = () => {
                   <i class="fa-solid fa-bowl-food text-am-600"></i>
                   <span class="truncate ${state.query ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${state.query || '¿Dónde quieres comer?'}</span>
                 </button>
-                ${state.query ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearQuery\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
+                ${state.query ? `<button type="button" aria-label="Limpiar" class="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200" data-onclick="clearQuery"><i class="fa-solid fa-xmark"></i></button>` : ''}
                 ${state.openField === 'restaurant' ? `
-                <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,90%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2">
-                  ${['Morado Bistro','Blanco & Uvas','Café Orquídea','Puerta 87'].map(v=>`<button class=\"block w-full text-left rounded px-3 py-2 hover:bg-neutral-100\" data-onclick=\"selectRestaurant\" data-value=\"${v}\">${v}</button>`).join('')}
+                <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,90%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2 max-h-64 overflow-auto">
+                  ${actions.getRestaurantSuggestions().map(restaurant => `
+                    <button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectRestaurant" data-value="${restaurant.name}">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-neutral-200 rounded-full flex items-center justify-center">
+                          <i class="fa-solid fa-utensils text-neutral-600 text-sm"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">${restaurant.name}</div>
+                          <div class="text-sm text-neutral-500">${restaurant.restaurant_type?.[0] || 'Restaurante'} • ${restaurant.city || 'Ubicación'}</div>
+                        </div>
+                      </div>
+                    </button>
+                  `).join('')}
                 </div>` : ''}
               </div>
 
@@ -356,7 +411,7 @@ const Navbar = () => {
                 ${state.location ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearLocation\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
                 ${state.openField === 'location' ? `
                 <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,90%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2">
-                  ${['Medellín','Envigado','Sabaneta','El Poblado'].map(v=>`<button class=\"block w-full text-left rounded px-3 py-2 hover:bg-neutral-100\" data-onclick=\"selectLocation\" data-value=\"${v}\">${v}</button>`).join('')}
+                  ${['Medellín','Envigado','Itagüí','Sabaneta','El Poblado'].map(v=>`<button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectLocation" data-value="${v}">${v}</button>`).join('')}
                 </div>` : ''}
               </div>
 
@@ -368,16 +423,16 @@ const Navbar = () => {
                 ${state.cuisine ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearCuisine\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
                 ${state.openField === 'cuisine' ? `
                 <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,90%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2 max-h-64 overflow-auto">
-                  ${['Alta cocina','Internacional','Italiana','Cafetería','Comida rápida'].map(v=>`<button class=\"block w-full text-left rounded px-3 py-2 hover:bg-neutral-100\" data-onclick=\"selectCuisine\" data-value=\"${v}\">${v}</button>`).join('')}
+                  ${['Colombiana','Italiana','Japonesa','Fusión','Hamburguesas','Pizza','Cafetería','Alta cocina'].map(v=>`<button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectCuisine" data-value="${v}">${v}</button>`).join('')}
                 </div>` : ''}
               </div>
 
               <div class="relative">
-                <button type="button" class="w-full h-11 ${(state.date||state.time) ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${(state.date||state.time) ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleDatetime" data-onfocus="openSearch">
+                <button type="button" class="w-full h-11 ${(state.date||state.time||state.partySize) ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${(state.date||state.time||state.partySize) ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleReservation" data-onfocus="openSearch">
                   <i class="fa-solid fa-calendar-days text-am-600"></i>
-                  <span class="truncate ${state.date || state.time ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${(state.date && state.time) ? `${state.date} ${state.time}` : (state.date || 'Fecha y hora')}</span>
+                  <span class="truncate ${state.date || state.time || state.partySize ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${(state.date && state.time && state.partySize) ? `${state.date} ${state.time} - ${state.partySize} pers.` : (state.date || 'Reserva')}</span>
                 </button>
-                ${(state.date || state.time) ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearDateTimeInline\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
+                ${(state.date || state.time || state.partySize) ? `<button type="button" aria-label="Limpiar" class="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200" data-onclick="clearDateTimeInline"><i class="fa-solid fa-xmark"></i></button>` : ''}
                 ${state.openField === 'datetime' ? `
                 <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,95%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-3">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -391,14 +446,18 @@ const Navbar = () => {
                         <div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div>
                       </div>
                       <div class="grid grid-cols-7 gap-1">
-                        ${cells.map(c => c.inMonth ? `<button class=\"h-8 rounded text-sm ${state.tempDate===c.key ? 'bg-am-50 border border-am-600 text-am-700' : 'hover:bg-neutral-100'}\" aria-pressed=\"${state.tempDate===c.key}\" data-onclick=\"selectDate\" data-date=\"${c.iso}\">${c.label}</button>` : `<span class=\"h-8\"></span>`).join('')}
+                        ${cells.map(c => c.inMonth ? `<button class="h-8 rounded text-sm ${state.tempDate===c.key ? 'bg-am-50 border border-am-600 text-am-700' : 'hover:bg-neutral-100'}" aria-pressed="${state.tempDate===c.key}" data-onclick="selectDate" data-date="${c.iso}">${c.label}</button>` : `<span class="h-8"></span>`).join('')}
                       </div>
                     </div>
                     <div>
                       <div class="text-sm text-neutral-600 mb-2">Hora</div>
+                      <input type="time" value="${state.tempTime || ''}" data-onchange="updateTimeInput" class="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-am-600 focus:border-transparent" placeholder="Selecciona una hora">
+                      
+                      <div class="text-sm text-neutral-600 mb-2 mt-3">Personas</div>
                       <div class="flex flex-wrap gap-2">
-                        ${times.map(t => `<button type=\"button\" data-onclick=\"selectTimeChip\" data-time=\"${t}\" class=\"px-3 py-1 rounded-full border ${state.tempTime===t ? 'border-am-600 text-am-700 bg-am-50' : 'border-neutral-300 hover:border-neutral-400'} text-sm\">${t}</button>`).join('')}
+                        ${[1,2,3,4,5,6,7,8,9,10].map(p => `<button type="button" data-onclick="selectPartySize" data-size="${p}" class="px-3 py-1 rounded-full border ${state.tempPartySize===String(p) ? 'border-am-600 text-am-700 bg-am-50' : 'border-neutral-300 hover:border-neutral-400'} text-sm">${p}</button>`).join('')}
                       </div>
+                      
                       <div class="flex justify-between items-center mt-4">
                         <button type="button" class="text-sm text-neutral-500 hover:underline" data-onclick="clearDatetime">Limpiar</button>
                         <button type="button" class="rounded-full bg-am-600 hover:bg-am-700 text-white px-4 py-1.5" data-onclick="applyDatetime">Aplicar</button>
@@ -409,7 +468,7 @@ const Navbar = () => {
               </div>
 
               <div class="flex items-center justify-center px-3 py-1 gap-2">
-                ${(state.query || state.location || state.cuisine || state.date || state.time) ? `
+                ${(state.query || state.location || state.cuisine || state.date || state.time || state.partySize) ? `
                 <button type="button" aria-label="Limpiar todas las selecciones" class="h-9 w-9 grid place-items-center rounded-full bg-neutral-500 hover:bg-neutral-600 text-white shadow transition-colors" data-onclick="clearAllSelections">
                   <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -433,6 +492,9 @@ const Navbar = () => {
   `;
   };
 
+  // Cargar restaurantes al inicializar
+  setTimeout(() => actions.loadRestaurants(), 100);
+
   const component = { state, actions, view };
   
   // Event listener para cerrar el menú cuando se hace clic fuera
@@ -453,3 +515,8 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+
+
+
+
