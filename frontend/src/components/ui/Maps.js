@@ -1,6 +1,11 @@
 // --- Google Maps optimizado para mostrar información del lugar ---
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
+// --- NUEVA VERIFICACIÓN DE SEGURIDAD ---
+if (!GOOGLE_MAPS_API_KEY) {
+  console.error("FATAL: La API Key de Google Maps no fue encontrada en las variables de entorno. El mapa no puede ser cargado.");
+}
+
 // Variables del mapa - singleton pattern
 let mapInstance = null;
 let searchBox = null;
@@ -13,6 +18,10 @@ let componentInitialized = false;
 
 // Cargar Google Maps de forma asíncrona
 function loadGoogleMaps() {
+  // --- VERIFICACIÓN ADICIONAL ---
+  if (!GOOGLE_MAPS_API_KEY) {
+    return Promise.reject(new Error('La API Key de Google Maps es obligatoria.'));
+  }
   if (window.google?.maps) return Promise.resolve();
   
   return new Promise((resolve, reject) => {
