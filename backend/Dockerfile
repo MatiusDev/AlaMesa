@@ -12,7 +12,7 @@ COPY . .
 # El puerto 8000 es el que se configura en main.py para producción.
 EXPOSE 8000
 # El host 0.0.0.0 permite que la aplicación sea accesible desde fuera del contenedor.
-CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000" ]
+CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers" ]
 
 # Comandos
 # Construir la imagen
