@@ -138,7 +138,7 @@ jobs:
             # Paso 4: Desplegar el backend y las bases de datos
             echo "📦 Desplegando servicios de backend con Docker Compose..."
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
             # Paso 5: Limpiar imágenes de Docker antiguas
             echo "🧹 Limpiando imágenes no utilizadas..."
