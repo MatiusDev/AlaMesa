@@ -20,6 +20,11 @@ ARG VITE_GOOGLE_MAPS_API_KEY
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 
+# --- PASO DE DEPURACIÓN ---
+# Imprimir la variable de entorno para verificar que se está recibiendo
+RUN echo "VITE_GOOGLE_MAPS_API_KEY en el build es: $VITE_GOOGLE_MAPS_API_KEY"
+# --- FIN PASO DE DEPURACIÓN ---
+
 # Construir la aplicación para producción
 RUN npm run build
 
