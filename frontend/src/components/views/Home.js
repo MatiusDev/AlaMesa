@@ -61,8 +61,10 @@ const Home = () => {
     }
   };
 
-  // Cargar restaurantes al inicializar
-  setTimeout(() => actions.loadRestaurants(), 100);
+  const onInit = () => {
+    actions.loadRestaurants();
+    console.log('onInit');
+  };
 
   const view = () => {
     const featuredRestaurants = actions.getFeaturedRestaurants();
@@ -79,24 +81,36 @@ const Home = () => {
         <!-- Sección de restaurantes destacados horizontal -->
         <div class="mt-10">
           <h2 class="text-xl font-semibold mb-4 text-center">Restaurantes Destacados</h2>
-          ${state.loading ? `
+          ${
+            state.loading
+              ? `
             <div class="text-center py-8">
               <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-am-600"></div>
               <p class="mt-2 text-neutral-500 text-sm">Cargando restaurantes...</p>
             </div>
-          ` : state.error ? `
+          `
+              : state.error
+              ? `
             <div class="text-center py-8">
               <p class="text-neutral-500">No se pudieron cargar los restaurantes destacados</p>
             </div>
-          ` : horizontalRestaurants.length > 0 ? `
+          `
+              : horizontalRestaurants.length > 0
+              ? `
             <div class="flex gap-4 overflow-x-auto pb-2">
-              ${horizontalRestaurants.map(r => `<div class="min-w-[280px]">${RestaurantCard(r)}</div>`).join('')}
+              ${
+                horizontalRestaurants
+                  .map(r => `<div class="min-w-[280px]">${RestaurantCard(r)}</div>`)
+                  .join('')
+              }
             </div>
-          ` : `
+          `
+              : `
             <div class="text-center py-8">
               <p class="text-neutral-500">No hay restaurantes disponibles en este momento</p>
             </div>
-          `}
+          `
+          }
         </div>
 
         <!-- Categorías -->
@@ -110,24 +124,32 @@ const Home = () => {
         <!-- Mejores calificados -->
         <div class="mt-12">
           <h2 class="text-xl font-semibold mb-4 text-center">Mejores Calificados</h2>
-          ${state.loading ? `
+          ${
+            state.loading
+              ? `
             <div class="text-center py-8">
               <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-am-600"></div>
               <p class="mt-2 text-neutral-500 text-sm">Cargando mejores calificados...</p>
             </div>
-          ` : state.error ? `
+          `
+              : state.error
+              ? `
             <div class="text-center py-8">
               <p class="text-neutral-500">No se pudieron cargar los mejores calificados</p>
             </div>
-          ` : featuredRestaurants.length > 0 ? `
+          `
+              : featuredRestaurants.length > 0
+              ? `
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               ${featuredRestaurants.map(RestaurantCard).join('')}
             </div>
-          ` : `
+          `
+              : `
             <div class="text-center py-8">
               <p class="text-neutral-500">No hay restaurantes calificados disponibles</p>
             </div>
-          `}
+          `
+          }
         </div>
 
         <!-- Sección sobre AlaMesa -->
@@ -152,12 +174,21 @@ const Home = () => {
     `;
   };
 
-  // Inicializar el componente del mapa después de renderizar
-  setTimeout(() => {
-    initGoogleMapsComponent();
-  }, 300);
+  const onUnmount = () => {
+    // Cuando el componente Home se "desmonta" (se navega fuera de él), 
+    // destruimos el estado del mapa para permitir una reinicialización limpia.
+    if (window.destroyGoogleMap) {
+      window.destroyGoogleMap();
+    }
+  };
 
-  return { state, actions, view };
+  const onRender = () => {
+    // Se llama cada vez que Home se pinta en el DOM.
+    // La función interna de Maps.js es suficientemente inteligente para no reinicializar todo.
+    initGoogleMapsComponent();
+  };
+
+  return { state, actions, view, onInit, onRender, onUnmount };
 };
 
-export default Home; 
+export default Home;

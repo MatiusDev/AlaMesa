@@ -28,15 +28,36 @@ const Navbar = () => {
     allLocations: [],
     allCuisines: [],
     showSearchSuggestions: false,
+    // Nuevos estados para autocompletado
+    restaurantSuggestions: [],
+    locationSuggestions: [],
+    cuisineSuggestions: [],
+    showRestaurantSuggestions: false,
+    showLocationSuggestions: false,
+    showCuisineSuggestions: false,
+    searchTimeout: null,
   };
 
   // Cargar restaurantes al inicializar
   setTimeout(() => actions.loadRestaurants(), 100);
 
   const actions = {
-    updateQuery: (e) => { state.query = e.target.value; },
-    updateLocation: (e) => { state.location = e.target.value; },
-    updateCuisine: (e) => { state.cuisine = e.target.value; },
+    // Funciones de actualización mejoradas con autocompletado
+    updateQuery: (e) => { 
+      state.query = e.target.value; 
+      actions.updateRestaurantSuggestions();
+      
+    },
+    updateLocation: (e) => { 
+      state.location = e.target.value; 
+      actions.updateLocationSuggestions();
+      
+    },
+    updateCuisine: (e) => { 
+      state.cuisine = e.target.value; 
+      actions.updateCuisineSuggestions();
+      
+    },
     updateDateTemp: (e) => { state.tempDate = e.target.value; },
     updateTimeTemp: (e) => { state.tempTime = e.target.value; },
     
@@ -45,44 +66,128 @@ const Navbar = () => {
       try {
         const data = await getRestaurants();
         state.restaurants = data || [];
-        // Extraer ubicaciones y tipos de cocina �nicos
+        // Extraer ubicaciones y tipos de cocina �nicos
         state.allLocations = [...new Set(data.map(r => r.city).filter(Boolean))].sort();
         state.allCuisines = [...new Set(data.flatMap(r => r.restaurant_type || []).filter(Boolean))].sort();
+        
+        // Inicializar sugerencias
+        state.restaurantSuggestions = state.restaurants.slice(0, 10);
+        state.locationSuggestions = state.allLocations.slice(0, 10);
+        state.cuisineSuggestions = state.allCuisines.slice(0, 10);
       } catch (error) {
         console.error('Error cargando restaurantes en Navbar:', error);
       }
     },
+
+    // Funciones de autocompletado
+    updateRestaurantSuggestions: () => {
+      if (!state.query || state.query.length < 1) {
+        state.restaurantSuggestions = state.restaurants.slice(0, 10);
+        state.showRestaurantSuggestions = false;
+        return;
+      }
+      
+      const query = state.query.toLowerCase().trim();
+      console.log('Filtering with query:', query);
+      
+      // Filtrar restaurantes por nombre
+      const restaurantMatches = state.restaurants
+        .filter(r => r.name?.toLowerCase().includes(query))
+        .slice(0, 5);
+      
+      // Filtrar tipos de cocina que contengan la query
+      const cuisineMatches = [...new Set(
+        state.restaurants.flatMap(r => r.restaurant_type || [])
+      )]
+        .filter(cuisine => cuisine.toLowerCase().includes(query))
+        .slice(0, 5);
+      
+      // Combinar resultados
+      state.restaurantSuggestions = [...restaurantMatches, ...cuisineMatches];
+      state.showRestaurantSuggestions = state.restaurantSuggestions.length > 0;
+      
+      console.log('Restaurant suggestions updated:', {
+        query,
+        restaurantMatches: restaurantMatches.length,
+        cuisineMatches: cuisineMatches.length,
+        total: state.restaurantSuggestions.length
+      });
+    },
+
+    updateLocationSuggestions: () => {
+      if (!state.location || state.location.length < 1) {
+        state.locationSuggestions = state.allLocations.slice(0, 10);
+        state.showLocationSuggestions = false;
+        return;
+      }
+      
+      const query = state.location.toLowerCase().trim();
+      state.locationSuggestions = state.allLocations
+        .filter(loc => loc.toLowerCase().includes(query))
+        .slice(0, 8);
+      
+      state.showLocationSuggestions = state.locationSuggestions.length > 0;
+      console.log('Location suggestions updated:', state.locationSuggestions);
+    },
+
+    updateCuisineSuggestions: () => {
+      if (!state.cuisine || state.cuisine.length < 1) {
+        state.cuisineSuggestions = state.allCuisines.slice(0, 10);
+        state.showCuisineSuggestions = false;
+        return;
+      }
+      
+      const query = state.cuisine.toLowerCase().trim();
+      state.cuisineSuggestions = state.allCuisines
+        .filter(cuisine => cuisine.toLowerCase().includes(query))
+        .slice(0, 8);
+      
+      state.showCuisineSuggestions = state.cuisineSuggestions.length > 0;
+      console.log('Cuisine suggestions updated:', state.cuisineSuggestions);
+    },
     onScroll: () => {
       // Solo cerrar el menú al hacer scroll para evitar problemas de posicionamiento
+      // Usar un flag para evitar re-renders innecesarios
       if (state.menuOpen) {
         state.menuOpen = false;
         state.menuClosing = false;
+        // Solo renderizar si realmente hay un cambio
+        
       }
     },
     submitSearch: (e) => {
       e.preventDefault();
-      const params = new URLSearchParams({
-        q: state.query || '',
-        loc: state.location || '',
-        cuisine: state.cuisine || '',
-        date: state.date || '',
-        time: state.time || '',
-        partySize: state.partySize || '',
+      console.log('Submitting search with:', {
+        query: state.query,
+        location: state.location,
+        cuisine: state.cuisine,
+        date: state.date,
+        time: state.time,
+        partySize: state.partySize
       });
-      window.location.hash = `#/restaurants?${params.toString()}`;
+      
+      const params = new URLSearchParams();
+      if (state.query) params.append('q', state.query);
+      if (state.location) params.append('loc', state.location);
+      if (state.cuisine) params.append('cuisine', state.cuisine);
+      if (state.date) params.append('date', state.date);
+      if (state.time) params.append('time', state.time);
+      if (state.partySize) params.append('partySize', state.partySize);
+      
+      const queryString = params.toString();
+      const url = queryString ? `#/restaurants?${queryString}` : '#/restaurants';
+      
+      console.log('Navigating to:', url);
+      window.location.hash = url;
+      
+      // Cerrar dropdowns
       state.expanded = false;
       state.openField = null;
+      state.showRestaurantSuggestions = false;
+      state.showLocationSuggestions = false;
+      state.showCuisineSuggestions = false;
       
-      // Limpiar campos después del submit
-      state.query = '';
-      state.location = '';
-      state.cuisine = '';
-      state.date = '';
-      state.time = '';
-      state.partySize = '';
-      state.tempDate = '';
-      state.tempTime = '';
-      state.tempPartySize = '';
+      // NO limpiar campos después del submit para mantener la búsqueda
     },
     toggleMenu: () => {
       // Si el menú está cerrando, no hacer nada
@@ -175,11 +280,32 @@ const Navbar = () => {
     },
     closeSearchDropdowns: () => {
       state.openField = null;
+      state.showRestaurantSuggestions = false;
+      state.showLocationSuggestions = false;
+      state.showCuisineSuggestions = false;
       // No cerrar expanded aquí para permitir selecciones
     },
-    toggleRestaurant: () => { state.expanded = true; state.openField = state.openField === 'restaurant' ? null : 'restaurant'; },
-    toggleLocation: () => { state.expanded = true; state.openField = state.openField === 'location' ? null : 'location'; },
-    toggleCuisine: () => { state.expanded = true; state.openField = state.openField === 'cuisine' ? null : 'cuisine'; },
+    toggleRestaurant: () => { 
+      state.expanded = true; 
+      state.openField = state.openField === 'restaurant' ? null : 'restaurant';
+      if (state.openField === 'restaurant') {
+        actions.updateRestaurantSuggestions();
+      }
+    },
+    toggleLocation: () => { 
+      state.expanded = true; 
+      state.openField = state.openField === 'location' ? null : 'location';
+      if (state.openField === 'location') {
+        actions.updateLocationSuggestions();
+      }
+    },
+    toggleCuisine: () => { 
+      state.expanded = true; 
+      state.openField = state.openField === 'cuisine' ? null : 'cuisine';
+      if (state.openField === 'cuisine') {
+        actions.updateCuisineSuggestions();
+      }
+    },
     toggleReservation: () => {
       state.tempDate = state.date;
       state.tempTime = state.time;
@@ -193,66 +319,100 @@ const Navbar = () => {
     },
     selectRestaurant: (e) => { 
       const value = e.currentTarget.dataset.value || '';
+      console.log('Selecting restaurant:', value);
       state.query = value; 
       state.openField = null; 
+      state.showRestaurantSuggestions = false;
       
       // Mostrar feedback
       state.showFeedback = true;
       state.feedbackMessage = `Restaurante seleccionado: ${value}`;
       
+      
+      
       // Cerrar feedback después de 2 segundos
       setTimeout(() => {
         state.showFeedback = false;
+
       }, 2000);
     },
     selectLocation: (e) => { 
       const value = e.currentTarget.dataset.value || '';
       state.location = value; 
       state.openField = null; 
+      state.showLocationSuggestions = false;
       
       // Mostrar feedback
       state.showFeedback = true;
       state.feedbackMessage = `Ubicación seleccionada: ${value}`;
       
+      
+      
       // Cerrar feedback después de 2 segundos
       setTimeout(() => {
         state.showFeedback = false;
+
       }, 2000);
     },
     selectCuisine: (e) => { 
       const value = e.currentTarget.dataset.value || '';
       state.cuisine = value; 
       state.openField = null; 
+      state.showCuisineSuggestions = false;
       
       // Mostrar feedback
       state.showFeedback = true;
       state.feedbackMessage = `Tipo de comida seleccionado: ${value}`;
       
+      
+      
       // Cerrar feedback después de 2 segundos
       setTimeout(() => {
         state.showFeedback = false;
+
       }, 2000);
     },
     clearQuery: () => { 
       state.query = ''; 
+      state.showRestaurantSuggestions = false;
       // Mostrar feedback
       state.showFeedback = true;
       state.feedbackMessage = 'Restaurante limpiado';
-      setTimeout(() => { state.showFeedback = false; }, 1500);
+      
+      
+      
+      setTimeout(() => { 
+        state.showFeedback = false; 
+
+      }, 1500);
     },
     clearLocation: () => { 
       state.location = ''; 
+      state.showLocationSuggestions = false;
       // Mostrar feedback
       state.showFeedback = true;
       state.feedbackMessage = 'Ubicación limpiada';
-      setTimeout(() => { state.showFeedback = false; }, 1500);
+      
+      
+      
+      setTimeout(() => { 
+        state.showFeedback = false; 
+
+      }, 1500);
     },
     clearCuisine: () => { 
       state.cuisine = ''; 
+      state.showCuisineSuggestions = false;
       // Mostrar feedback
       state.showFeedback = true;
       state.feedbackMessage = 'Tipo de comida limpiado';
-      setTimeout(() => { state.showFeedback = false; }, 1500);
+      
+      
+      
+      setTimeout(() => { 
+        state.showFeedback = false; 
+
+      }, 1500);
     },
     clearDatetime: () => { 
       state.tempDate = ''; 
@@ -309,23 +469,24 @@ const Navbar = () => {
     gotoAuth: () => { window.location.hash = '#/auth'; },
     gotoHome: () => { window.location.hash = '#/'; },
     gotoRestaurants: () => { window.location.hash = '#/restaurants'; },
-    getRestaurantSuggestions: () => {
-      // Aquí iría la lógica para obtener sugerencias de restaurantes
-      // Por ejemplo, desde una API o un archivo de datos
-      // Para este ejemplo, devolvemos un array de objetos simulados
-      return [
-        { name: 'Restaurante A', restaurant_type: ['Restaurante', 'Internacional'], city: 'Medellín' },
-        { name: 'Restaurante B', restaurant_type: ['Restaurante', 'Colombiano'], city: 'Envigado' },
-        { name: 'Restaurante C', restaurant_type: ['Restaurante', 'Italiano'], city: 'Itagüí' },
-        { name: 'Restaurante D', restaurant_type: ['Restaurante', 'Japonesa'], city: 'Sabaneta' },
-        { name: 'Restaurante E', restaurant_type: ['Restaurante', 'Colombiano'], city: 'El Poblado' },
-        { name: 'Restaurante F', restaurant_type: ['Restaurante', 'Internacional'], city: 'Medellín' },
-        { name: 'Restaurante G', restaurant_type: ['Restaurante', 'Colombiano'], city: 'Envigado' },
-        { name: 'Restaurante H', restaurant_type: ['Restaurante', 'Italiano'], city: 'Itagüí' },
-        { name: 'Restaurante I', restaurant_type: ['Restaurante', 'Japonesa'], city: 'Sabaneta' },
-        { name: 'Restaurante J', restaurant_type: ['Restaurante', 'Colombiano'], city: 'El Poblado' },
-      ];
+
+    // Funciones para manejar el cierre de sugerencias
+    hideRestaurantSuggestions: () => {
+      setTimeout(() => {
+        state.showRestaurantSuggestions = false;
+      }, 200);
     },
+    hideLocationSuggestions: () => {
+      setTimeout(() => {
+        state.showLocationSuggestions = false;
+      }, 200);
+    },
+    hideCuisineSuggestions: () => {
+      setTimeout(() => {
+        state.showCuisineSuggestions = false;
+      }, 200);
+    },
+
   };
 
   // Cargar restaurantes al inicializar
@@ -380,22 +541,29 @@ const Navbar = () => {
           <div class="relative mx-auto w-full max-w-6xl rounded-full border border-neutral-200 bg-white shadow-soft transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${state.expanded ? 'ring-2 ring-am-600/30 shadow-lg' : ''} overflow-hidden">
             <div class="grid grid-cols-1 md:grid-cols-[1.35fr_1fr_1fr_1.2fr_auto] divide-y md:divide-y-0 md:divide-x divide-neutral-200 items-stretch">
               <div class="relative">
-                <button type="button" class="w-full h-11 ${state.query ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${state.query ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleRestaurant" data-onfocus="openSearch">
-                  <i class="fa-solid fa-bowl-food text-am-600"></i>
-                  <span class="truncate ${state.query ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${state.query || '¿Dónde quieres comer?'}</span>
-                </button>
-                ${state.query ? `<button type="button" aria-label="Limpiar" class="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200" data-onclick="clearQuery"><i class="fa-solid fa-xmark"></i></button>` : ''}
-                ${state.openField === 'restaurant' ? `
+                <div class="relative w-full h-11 flex items-center">
+                  <i class="fa-solid fa-bowl-food text-am-600 absolute left-4 z-10"></i>
+                  <input 
+                    type="text" 
+                    placeholder="¿Dónde quieres comer?"
+                    value="${state.query}"
+                    data-oninput="updateQuery"
+                    data-onfocus="openSearch"
+                    class="w-full h-full pl-12 pr-4 text-sm border-0 outline-none bg-transparent placeholder-neutral-400 focus:placeholder-neutral-300"
+                  />
+                  ${state.query ? `<button type="button" aria-label="Limpiar" class="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200" data-onclick="clearQuery"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                </div>
+                ${state.showRestaurantSuggestions && state.restaurantSuggestions.length > 0 ? `
                 <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,90%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2 max-h-64 overflow-auto">
-                  ${actions.getRestaurantSuggestions().map(restaurant => `
-                    <button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectRestaurant" data-value="${restaurant.name}">
+                  ${state.restaurantSuggestions.map(item => `
+                    <button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectRestaurant" data-value="${item.name || item}">
                       <div class="flex items-center gap-3">
                         <div class="w-8 h-8 bg-neutral-200 rounded-full flex items-center justify-center">
                           <i class="fa-solid fa-utensils text-neutral-600 text-sm"></i>
                         </div>
                         <div>
-                          <div class="font-medium">${restaurant.name}</div>
-                          <div class="text-sm text-neutral-500">${restaurant.restaurant_type?.[0] || 'Restaurante'} • ${restaurant.city || 'Ubicación'}</div>
+                          <div class="font-medium">${item.name || item}</div>
+                          <div class="text-sm text-neutral-500">${item.restaurant_type?.[0] || 'Tipo de comida'} • ${item.city || 'Opción'}</div>
                         </div>
                       </div>
                     </button>
@@ -404,26 +572,64 @@ const Navbar = () => {
               </div>
 
               <div class="relative">
-                <button type="button" class="w-full h-11 ${state.location ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${state.location ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleLocation" data-onfocus="openSearch">
-                  <i class="fa-solid fa-location-dot text-am-600"></i>
-                  <span class="truncate ${state.location ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${state.location || 'Ubicación'}</span>
-                </button>
-                ${state.location ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearLocation\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
-                ${state.openField === 'location' ? `
-                <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,90%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2">
-                  ${['Medellín','Envigado','Itagüí','Sabaneta','El Poblado'].map(v=>`<button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectLocation" data-value="${v}">${v}</button>`).join('')}
+                <div class="relative w-full h-11 flex items-center">
+                  <i class="fa-solid fa-location-dot text-am-600 absolute left-4 z-10"></i>
+                  <input 
+                    type="text" 
+                    placeholder="Ubicación"
+                    value="${state.location}"
+                    data-oninput="updateLocation"
+                    data-onfocus="openSearch"
+                    class="w-full h-full pl-12 pr-4 text-sm border-0 outline-none bg-transparent placeholder-neutral-400 focus:placeholder-neutral-300"
+                  />
+                  ${state.location ? `<button type="button" aria-label="Limpiar" class="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200" data-onclick="clearLocation"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                </div>
+                ${state.showLocationSuggestions && state.locationSuggestions.length > 0 ? `
+                <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,90%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2 max-h-64 overflow-auto">
+                  ${state.locationSuggestions.map(location => `
+                    <button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectLocation" data-value="${location}">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-neutral-200 rounded-full flex items-center justify-center">
+                          <i class="fa-solid fa-location-dot text-neutral-600 text-sm"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">${location}</div>
+                          <div class="text-sm text-neutral-500">Ubicación</div>
+                        </div>
+                      </div>
+                    </button>
+                  `).join('')}
                 </div>` : ''}
               </div>
 
               <div class="relative">
-                <button type="button" class="w-full h-11 ${state.cuisine ? 'pr-8' : ''} pl-4 text-left flex items-center gap-2 transition-colors duration-200 hover:bg-neutral-50 ${state.cuisine ? 'bg-am-50 border-am-200' : ''}" data-onclick="toggleCuisine" data-onfocus="openSearch">
-                  <i class="fa-solid fa-utensils text-am-600"></i>
-                  <span class="truncate ${state.cuisine ? 'text-neutral-900 font-medium' : 'text-neutral-400'}">${state.cuisine || 'Tipo de comida'}</span>
-                </button>
-                ${state.cuisine ? `<button type=\"button\" aria-label=\"Limpiar\" class=\"absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200\" data-onclick=\"clearCuisine\"><i class=\"fa-solid fa-xmark\"></i></button>` : ''}
-                ${state.openField === 'cuisine' ? `
+                <div class="relative w-full h-11 flex items-center">
+                  <i class="fa-solid fa-utensils text-am-600 absolute left-4 z-10"></i>
+                  <input 
+                    type="text" 
+                    placeholder="Tipo de comida"
+                    value="${state.cuisine}"
+                    data-oninput="updateCuisine"
+                    data-onfocus="openSearch"
+                    class="w-full h-full pl-12 pr-4 text-sm border-0 outline-none bg-transparent placeholder-neutral-400 focus:placeholder-neutral-300"
+                  />
+                  ${state.cuisine ? `<button type="button" aria-label="Limpiar" class="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200" data-onclick="clearCuisine"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                </div>
+                ${state.showCuisineSuggestions && state.cuisineSuggestions.length > 0 ? `
                 <div class="fixed left-1/2 -translate-x-1/2 ${dropdownTop} z-50 w-[min(560px,90%)] rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft p-2 max-h-64 overflow-auto">
-                  ${['Colombiana','Italiana','Japonesa','Fusión','Hamburguesas','Pizza','Cafetería','Alta cocina'].map(v=>`<button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectCuisine" data-value="${v}">${v}</button>`).join('')}
+                  ${state.cuisineSuggestions.map(cuisine => `
+                    <button class="block w-full text-left rounded px-3 py-2 hover:bg-neutral-100" data-onclick="selectCuisine" data-value="${cuisine}">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-neutral-200 rounded-full flex items-center justify-center">
+                          <i class="fa-solid fa-utensils text-neutral-600 text-sm"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">${cuisine}</div>
+                          <div class="text-sm text-neutral-500">Tipo de comida</div>
+                        </div>
+                      </div>
+                    </button>
+                  `).join('')}
                 </div>` : ''}
               </div>
 
@@ -495,26 +701,10 @@ const Navbar = () => {
   // Cargar restaurantes al inicializar
   setTimeout(() => actions.loadRestaurants(), 100);
 
-  const component = { state, actions, view };
-  
-  // Event listener para cerrar el menú cuando se hace clic fuera
-  window.addEventListener('click', (e) => {
-    if (state.menuOpen) {
-      const menu = document.querySelector('nav[class*="fixed z-[9999]"]');
-      const logoBtn = document.querySelector('[data-ref="logoBtn"]');
-      
-      if (menu && !menu.contains(e.target) && logoBtn && !logoBtn.contains(e.target)) {
-        state.menuOpen = false;
-        state.menuClosing = false;
-      }
-    }
-  });
-  
-  window.addEventListener('scroll', () => component.actions.onScroll());
-  return component;
-};
+  return { state, actions, view };
+};export default Navbar;
 
-export default Navbar;
+
 
 
 
