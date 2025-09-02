@@ -43,6 +43,9 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
+          build-args: |
+            VITE_API_BASE_URL=/api
+            VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
           tags: |
             ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:production
             ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:${{ github.sha }}
