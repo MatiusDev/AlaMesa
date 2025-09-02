@@ -65,7 +65,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "5173:80" # Se usa el puerto 5173 de Vite para desarrollo
+      - "3000:80" # Se usa el puerto 3000 para desarrollo
     volumes:
       - ./frontend/src:/app/src # Monta solo el código fuente para hot-reloading
     depends_on:

@@ -3,6 +3,7 @@ import uvicorn
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde el .env en la raíz del proyecto
@@ -14,6 +15,15 @@ from core.database.connection import init_db
 from core.database.mongodb_driver import init_mongodb
 
 app = FastAPI()
+
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 async def on_startup():

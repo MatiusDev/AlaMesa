@@ -21,6 +21,11 @@ const Router = () => {
   // puedan ser sobreescritas por el renderer. De esta forma, el listener de `hashchange`
   // puede invocar la acción `navigate` ya "proxificada" y disparar un re-renderizado.
   const component = {
+    // ... (state y otras propiedades)
+    onReady: ({ render }) => {
+      // Guardamos la función de renderizado para usarla en la navegación.
+      component.render = render;
+    },
     // 2. El estado del Router contiene la ruta activa.
     state: {
       currentPath: window.location.hash || '#/',
@@ -29,13 +34,35 @@ const Router = () => {
     // 3. La acción `navigate` actualiza el estado con la nueva ruta.
     actions: {
       navigate: () => {
+        const oldPath = component.state.currentPath.split('?')[0];
+        const oldViewInstance = viewInstances[oldPath] || notFoundInstance;
+
+        // Si el componente que estamos dejando tiene una función de limpieza, la ejecutamos
+        // y reiniciamos su estado de inicialización para que `onInit` se vuelva a llamar.
+        if (oldViewInstance) {
+          if (typeof oldViewInstance.onUnmount === 'function') {
+            oldViewInstance.onUnmount();
+          }
+          oldViewInstance._initialized = false;
+        }
+
+        // Actualiza la ruta, lo que dispara el re-renderizado reactivo.
         component.state.currentPath = window.location.hash || '#/';
       },
     },
 
     // 5. La vista del Router decide qué componente hijo renderizar.
     view: () => {
-      const activeViewInstance = viewInstances[component.state.currentPath] || notFoundInstance;
+      // Extraer la ruta base sin parámetros de query
+      const basePath = component.state.currentPath.split('?')[0];
+      const activeViewInstance = viewInstances[basePath] || notFoundInstance;
+
+      // Llama al ciclo de vida onInit de la vista activa si existe y no se ha ejecutado antes.
+      if (activeViewInstance.onInit && !activeViewInstance._initialized) {
+        activeViewInstance.onInit();
+        activeViewInstance._initialized = true; // Se marca para no reinicializar en futuras navegaciones.
+      }
+
       return renderComponent(activeViewInstance);
     },
 
