@@ -1,5 +1,5 @@
 // --- Google Maps optimizado para mostrar información del lugar ---
-const GOOGLE_MAPS_API_KEY = 'AIzaSyC3lKjXeWD9LVoh6rtBoofI-B1Nqo4K_V0';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // Variables del mapa - singleton pattern
 let mapInstance = null;

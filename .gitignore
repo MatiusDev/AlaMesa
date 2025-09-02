@@ -255,3 +255,6 @@ web_modules/
 # Vite
 /frontend/dist
 /frontend/dist-ssr
+
+# Frontend .env files
+frontend/.env*

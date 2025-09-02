@@ -53,6 +53,8 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
+          build-args: |
+            VITE_API_BASE_URL=/api
           tags: |
             ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:development
             ghcr.io/${{ steps.string.outputs.repository_lowercase }}/alamesa-frontend:${{ github.sha }}

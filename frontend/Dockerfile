@@ -12,6 +12,14 @@ RUN npm install
 # Copiar el resto del código fuente
 COPY . .
 
+# Definir los argumentos que se pueden pasar durante la compilación
+ARG VITE_API_BASE_URL=/api
+ARG VITE_GOOGLE_MAPS_API_KEY
+
+# Exponer los argumentos como variables de entorno para que Vite pueda usarlos
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
+
 # Construir la aplicación para producción
 RUN npm run build
 
