@@ -162,4 +162,5 @@ Para asegurar el sitio con `https://`, se usa Let's Encrypt y Certbot.
     ```bash
     sudo certbot renew --dry-run
     ```
+
     Si no hay errores, no necesitas hacer nada más.

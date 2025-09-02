@@ -1,78 +1,51 @@
-// --- Google Maps simple para mostrar información del lugar ---
+// --- Google Maps optimizado para mostrar información del lugar ---
 const GOOGLE_MAPS_API_KEY = 'AIzaSyC3lKjXeWD9LVoh6rtBoofI-B1Nqo4K_V0';
 
-// Variables del mapa
+// Variables del mapa - singleton pattern
 let mapInstance = null;
 let searchBox = null;
 let currentMarker = null;
 let infoWindow = null;
 let mapContainer = null;
 let mapInitialized = false;
+let isInitializing = false;
+let componentInitialized = false;
 
-// Cargar Google Maps
+// Cargar Google Maps de forma asíncrona
 function loadGoogleMaps() {
   if (window.google?.maps) return Promise.resolve();
   
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      console.log('Google Maps cargado correctamente');
+      resolve();
+    };
     script.onerror = () => reject(new Error('Failed to load Google Maps'));
     document.head.appendChild(script);
   });
 }
 
-// Verificar que la API esté funcionando
-function checkAPIHealth() {
-  if (!window.google?.maps) {
-    console.log('API de Google Maps no disponible, recargando...');
-    reloadGoogleMaps();
-    return false;
-  }
-  
-  if (!mapInstance) {
-    console.log('Instancia del mapa perdida, reinicializando...');
-    initMap();
-    return false;
-  }
-  
-  return true;
-}
-
-// Recargar Google Maps si es necesario
-function reloadGoogleMaps() {
-  console.log('Recargando Google Maps...');
-  
-  // Limpiar variables
-  mapInstance = null;
-  searchBox = null;
-  currentMarker = null;
-  infoWindow = null;
-  mapInitialized = false;
-  
-  // Recargar script
-  loadGoogleMaps().then(() => {
-    console.log('Google Maps recargado, reinicializando...');
-    setTimeout(() => {
-      initMap();
-    }, 1000);
-  }).catch(error => {
-    console.error('Error al recargar Google Maps:', error);
-  });
-}
-
-// Inicializar mapa simple
+// Inicializar mapa una sola vez
 function initMap() {
+  if (isInitializing || mapInitialized) return;
+  
   mapContainer = document.getElementById('restaurant-search-map');
-  if (!mapContainer || mapInstance) return;
+  if (!mapContainer) return;
+  
+  isInitializing = true;
   
   try {
     // Verificar que la API esté disponible
     if (!window.google?.maps) {
       console.log('API no disponible, esperando...');
-      setTimeout(initMap, 500);
+      setTimeout(() => {
+        isInitializing = false;
+        initMap();
+      }, 500);
       return;
     }
     
@@ -86,7 +59,8 @@ function initMap() {
       mapTypeControl: false,
       fullscreenControl: false,
       streetViewControl: false,
-      zoomControl: true
+      zoomControl: true,
+      gestureHandling: 'greedy'
     });
 
     // Crear InfoWindow con estilos personalizados
@@ -96,30 +70,26 @@ function initMap() {
 
     console.log('Mapa creado, configurando búsqueda...');
     
-    // Configurar SearchBox
+    // Configurar búsqueda con Places API (más moderno que SearchBox)
     const input = document.getElementById('restaurant-search-input');
     if (input) {
-      searchBox = new google.maps.places.SearchBox(input);
+      // Usar Autocomplete en lugar de SearchBox (no deprecated)
+      const autocomplete = new google.maps.places.Autocomplete(input, {
+        types: ['establishment', 'geocode'],
+        componentRestrictions: { country: 'co' }
+      });
       
       // Evento cuando se selecciona un lugar
-      searchBox.addListener('places_changed', () => {
-        // Verificar que la API esté funcionando
-        if (!checkAPIHealth()) return;
-        
-        const places = searchBox.getPlaces();
-        if (places.length === 0) return;
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry || !place.geometry.location) {
+          console.log("No se encontró información de ubicación para este lugar.");
+          return;
+        }
 
         // Limpiar marcador anterior
         if (currentMarker) {
           currentMarker.setMap(null);
-        }
-        
-        // Obtener el lugar seleccionado
-        const place = places[0];
-        
-        if (!place.geometry || !place.geometry.location) {
-          console.log("No se encontró información de ubicación para este lugar.");
-          return;
         }
 
         // Centrar mapa en el lugar
@@ -145,6 +115,7 @@ function initMap() {
     }
 
     mapInitialized = true;
+    isInitializing = false;
     
     // Ocultar loading y mostrar controles
     const loadingEl = document.getElementById('map-loading');
@@ -157,10 +128,7 @@ function initMap() {
     
   } catch (error) {
     console.error('Error al inicializar el mapa:', error);
-    // Si hay error, intentar recargar
-    setTimeout(() => {
-      reloadGoogleMaps();
-    }, 2000);
+    isInitializing = false;
   }
 }
 
@@ -216,8 +184,10 @@ window.getDirections = function(lat, lng) {
   window.open(url, '_blank');
 };
 
-// Inicializar mapa
+// Inicializar mapa una sola vez
 function setupMap() {
+  if (mapInitialized || isInitializing) return;
+  
   mapContainer = document.getElementById('restaurant-search-map');
   if (mapContainer && !mapInstance) {
     console.log('Configurando mapa...');
@@ -228,44 +198,22 @@ function setupMap() {
       }, 500);
     }).catch(error => {
       console.error('Error al cargar Google Maps:', error);
+      isInitializing = false;
     });
   }
 }
 
-// Configurar listeners para mantener la API "viva"
+// Configurar listeners mínimos (sin verificaciones periódicas)
 function setupMapListeners() {
-  // Verificar salud de la API periódicamente
-  setInterval(() => {
-    if (mapInitialized) {
-      checkAPIHealth();
-    }
-  }, 5000); // Verificar cada 5 segundos
-  
-  // Verificar en scroll (con debouncing)
-  let scrollTimeout;
-  window.addEventListener('scroll', () => {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      if (mapInitialized) {
-        checkAPIHealth();
-      }
-    }, 1000); // Verificar 1 segundo después del scroll
-  });
-  
-  // Verificar en resize
+  // Solo verificar en resize para ajustar el mapa
+  let resizeTimeout;
   window.addEventListener('resize', () => {
-    if (mapInstance && mapInitialized) {
-      google.maps.event.trigger(mapInstance, 'resize');
-    }
-  });
-  
-  // Verificar cuando la página vuelve a ser visible
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && mapInitialized) {
-      setTimeout(() => {
-        checkAPIHealth();
-      }, 500);
-    }
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (mapInstance && mapInitialized) {
+        google.maps.event.trigger(mapInstance, 'resize');
+      }
+    }, 250);
   });
 }
 
@@ -375,7 +323,7 @@ function performSearch() {
   }
   
   // Usar la API de Google Places para buscar
-  if (searchBox && google && google.maps && google.maps.places) {
+  if (google && google.maps && google.maps.places) {
     // Crear una nueva búsqueda con Places API
     const service = new google.maps.places.PlacesService(mapInstance);
     
@@ -510,8 +458,18 @@ function toggleMapType() {
   }
 }
 
-// Función para inicializar el mapa después de renderizar
+// Función para inicializar el mapa después de renderizar.
 function initGoogleMapsComponent() {
+  // Si ya hay un mapa inicializado o se está inicializando, no hacer nada.
+  // La destrucción debe ser manejada explícitamente por el componente que lo usa.
+  if (mapInitialized || isInitializing) {
+    console.log(`Mapa ya inicializado (mapInitialized: ${mapInitialized}, isInitializing: ${isInitializing}). Saltando...`);
+    return;
+  }
+  
+  console.log('Iniciando componente de Google Maps...');
+  componentInitialized = true; // Marcamos que el componente ha sido inicializado
+  
   setTimeout(() => {
     setupMap();
     setupMapListeners();
@@ -519,11 +477,15 @@ function initGoogleMapsComponent() {
     // Agregar listener para búsqueda con Enter
     const searchInput = document.getElementById('restaurant-search-input');
     if (searchInput) {
-      searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          performSearch();
-        }
-      });
+      // Prevenir añadir múltiples listeners
+      if (!searchInput.dataset.listenerAttached) {
+        searchInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            performSearch();
+          }
+        });
+        searchInput.dataset.listenerAttached = 'true';
+      }
     }
   }, 300);
 }
@@ -534,4 +496,33 @@ window.resetMapView = resetMapView;
 window.toggleMapType = toggleMapType;
 window.showPlaceInfo = showPlaceInfo;
 
-export { renderGoogleMaps, initGoogleMapsComponent };
+// Función para destruir y limpiar la instancia del mapa
+function destroyGoogleMap() {
+  console.log('Destruyendo instancia de Google Maps...');
+  
+  // Limpiar listeners de eventos de Google Maps si es posible (requiere referencias)
+  // Por ahora, nos enfocamos en limpiar el estado y el DOM.
+
+  if (currentMarker) {
+    currentMarker.setMap(null);
+  }
+  
+  // La instancia del mapa de Google se elimina al limpiar el contenedor.
+  mapContainer = document.getElementById('restaurant-search-map');
+  if (mapContainer) {
+    mapContainer.innerHTML = '';
+  }
+
+  // Reiniciar todas las variables de estado para permitir la reinicialización.
+  mapInstance = null;
+  searchBox = null;
+  currentMarker = null;
+  infoWindow = null;
+  mapContainer = null;
+  mapInitialized = false;
+  isInitializing = false;
+  componentInitialized = false; // Importante para la lógica de reinicio
+}
+window.destroyGoogleMap = destroyGoogleMap;
+
+export { renderGoogleMaps, initGoogleMapsComponent, destroyGoogleMap };
