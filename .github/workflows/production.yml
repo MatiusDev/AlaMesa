@@ -7,6 +7,7 @@ jobs:
   build-production:
     name: Build and Push Production Images
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
