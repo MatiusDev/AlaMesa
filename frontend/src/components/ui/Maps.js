@@ -4,7 +4,6 @@ const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 // --- NUEVA VERIFICACIÓN DE SEGURIDAD ---
 if (!GOOGLE_MAPS_API_KEY) {
   console.error("FATAL: La API Key de Google Maps no fue encontrada en las variables de entorno. El mapa no puede ser cargado.");
-  // No continuamos si la clave no existe
 }
 
 // Variables del mapa - singleton pattern
