@@ -145,7 +145,3 @@ jobs:
             docker image prune -af
 
             echo "✅ Despliegue completado exitosamente!"
-        env:
-          ENV_FILE_CONTENT: ${{ steps.create_env.outputs.content }}
-          DEPLOY_PATH: ${{ secrets.PRODUCTION_PATH }}
-          WEB_ROOT: ${{ secrets.WEB_ROOT }}
