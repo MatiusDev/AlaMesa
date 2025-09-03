@@ -47,7 +47,7 @@ const Home = () => {
     viewRestaurantDetails: (e) => {
       const restaurantId = e.currentTarget.dataset.restaurantId;
       if (restaurantId) {
-        window.location.hash = `#/restaurants?restaurant=${restaurantId}`;
+        window.location.hash = `#/restaurant/${restaurantId}`;
       } else {
         window.location.hash = '#/restaurants';
       }

@@ -39,12 +39,6 @@ const Navbar = () => {
     initialized: false, // Flag para controlar la carga inicial
   };
 
-  // Cargar restaurantes solo una vez
-  if (!state.initialized) {
-    setTimeout(() => actions.loadRestaurants(), 100);
-    state.initialized = true;
-  }
-
   const actions = {
     // Funciones de actualización mejoradas con autocompletado
     updateQuery: (e) => { 
@@ -74,13 +68,14 @@ const Navbar = () => {
         const data = await getRestaurants();
         state.restaurants = data || [];
         // Extraer ubicaciones y tipos de cocina �nicos
-        state.allLocations = [...new Set(data.map(r => r.city).filter(Boolean))].sort();
+        // Ubicaciones fijas como solicitaste
+        state.allLocations = ['Medellín', 'Envigado', 'Itaguí'];
         state.allCuisines = [...new Set(data.flatMap(r => r.restaurant_type || []).filter(Boolean))].sort();
         
         // Inicializar sugerencias
         state.restaurantSuggestions = state.restaurants.slice(0, 10);
-        state.locationSuggestions = state.allLocations.slice(0, 10);
-        state.cuisineSuggestions = state.allCuisines.slice(0, 10);
+        state.locationSuggestions = state.allLocations; // Mostrar todas las ubicaciones
+        state.cuisineSuggestions = state.allCuisines; // Mostrar todos los tipos de cocina
       } catch (error) {
         console.error('Error cargando restaurantes en Navbar:', error);
       }
@@ -123,15 +118,14 @@ const Navbar = () => {
 
     updateLocationSuggestions: () => {
       if (!state.location || state.location.length < 1) {
-        state.locationSuggestions = state.allLocations.slice(0, 10);
+        state.locationSuggestions = state.allLocations; // Mostrar todas las ubicaciones
         state.showLocationSuggestions = false;
         return;
       }
       
       const query = state.location.toLowerCase().trim();
       state.locationSuggestions = state.allLocations
-        .filter(loc => loc.toLowerCase().includes(query))
-        .slice(0, 8);
+        .filter(loc => loc.toLowerCase().includes(query));
       
       state.showLocationSuggestions = state.locationSuggestions.length > 0;
       console.log('Location suggestions updated:', state.locationSuggestions);
@@ -139,15 +133,14 @@ const Navbar = () => {
 
     updateCuisineSuggestions: () => {
       if (!state.cuisine || state.cuisine.length < 1) {
-        state.cuisineSuggestions = state.allCuisines.slice(0, 10);
+        state.cuisineSuggestions = state.allCuisines; // Mostrar todos los tipos de cocina
         state.showCuisineSuggestions = false;
         return;
       }
       
       const query = state.cuisine.toLowerCase().trim();
       state.cuisineSuggestions = state.allCuisines
-        .filter(cuisine => cuisine.toLowerCase().includes(query))
-        .slice(0, 8);
+        .filter(cuisine => cuisine.toLowerCase().includes(query));
       
       state.showCuisineSuggestions = state.cuisineSuggestions.length > 0;
       console.log('Cuisine suggestions updated:', state.cuisineSuggestions);
@@ -290,7 +283,7 @@ const Navbar = () => {
       state.showRestaurantSuggestions = false;
       state.showLocationSuggestions = false;
       state.showCuisineSuggestions = false;
-      // No cerrar expanded aquí para permitir selecciones
+      state.expanded = false; // Cerrar el formulario expandido
     },
     toggleRestaurant: () => { 
       state.expanded = true; 
@@ -303,14 +296,24 @@ const Navbar = () => {
       state.expanded = true; 
       state.openField = state.openField === 'location' ? null : 'location';
       if (state.openField === 'location') {
-        actions.updateLocationSuggestions();
+        // Mostrar todas las ubicaciones disponibles
+        state.locationSuggestions = state.allLocations;
+        state.showLocationSuggestions = true;
+      } else {
+        // Cerrar el dropdown
+        state.showLocationSuggestions = false;
       }
     },
     toggleCuisine: () => { 
       state.expanded = true; 
       state.openField = state.openField === 'cuisine' ? null : 'cuisine';
       if (state.openField === 'cuisine') {
-        actions.updateCuisineSuggestions();
+        // Mostrar todos los tipos de cocina disponibles
+        state.cuisineSuggestions = state.allCuisines;
+        state.showCuisineSuggestions = true;
+      } else {
+        // Cerrar el dropdown
+        state.showCuisineSuggestions = false;
       }
     },
     toggleReservation: () => {
@@ -325,6 +328,8 @@ const Navbar = () => {
       state.calendarCursor = baseDate.toISOString();
     },
     selectRestaurant: (e) => { 
+      e.preventDefault();
+      e.stopPropagation();
       const value = e.currentTarget.dataset.value || '';
       console.log('Selecting restaurant:', value);
       state.query = value; 
@@ -335,48 +340,110 @@ const Navbar = () => {
       state.showFeedback = true;
       state.feedbackMessage = `Restaurante seleccionado: ${value}`;
       
-      
+      // Redirigir automáticamente a restaurantes con el filtro aplicado después de un pequeño delay
+      setTimeout(() => {
+        const params = new URLSearchParams();
+        if (value) params.append('q', value);
+        if (state.location) params.append('loc', state.location);
+        if (state.cuisine) params.append('cuisine', state.cuisine);
+        if (state.date) params.append('date', state.date);
+        if (state.time) params.append('time', state.time);
+        if (state.partySize) params.append('partySize', state.partySize);
+        
+        const queryString = params.toString();
+        const url = queryString ? `#/restaurants?${queryString}` : '#/restaurants';
+        window.location.hash = url;
+      }, 100);
       
       // Cerrar feedback después de 2 segundos
       setTimeout(() => {
         state.showFeedback = false;
-
       }, 2000);
     },
     selectLocation: (e) => { 
+      e.preventDefault();
+      e.stopPropagation();
       const value = e.currentTarget.dataset.value || '';
-      state.location = value; 
+      console.log('Navbar - selectLocation llamado:', { value, currentLocation: state.location });
+      state.location = value;
+      console.log('Navbar - Estado después de actualizar:', { newLocation: state.location }); 
       state.openField = null; 
       state.showLocationSuggestions = false;
+      state.expanded = false; // Cerrar el formulario expandido
       
       // Mostrar feedback
       state.showFeedback = true;
       state.feedbackMessage = `Ubicación seleccionada: ${value}`;
       
-      
+      // Redirigir automáticamente a restaurantes con el filtro aplicado después de un pequeño delay
+      setTimeout(() => {
+        const params = new URLSearchParams();
+        if (state.query) params.append('q', state.query);
+        if (value) params.append('loc', value);
+        if (state.cuisine) params.append('cuisine', state.cuisine);
+        if (state.date) params.append('date', state.date);
+        if (state.time) params.append('time', state.time);
+        if (state.partySize) params.append('partySize', state.partySize);
+        
+        const queryString = params.toString();
+        const url = queryString ? `#/restaurants?${queryString}` : '#/restaurants';
+        
+        console.log('Navbar - Redirigiendo con filtros:', {
+          location: value,
+          query: state.query,
+          cuisine: state.cuisine,
+          url: url
+        });
+        
+        window.location.hash = url;
+      }, 100);
       
       // Cerrar feedback después de 2 segundos
       setTimeout(() => {
         state.showFeedback = false;
-
       }, 2000);
     },
     selectCuisine: (e) => { 
+      e.preventDefault();
+      e.stopPropagation();
       const value = e.currentTarget.dataset.value || '';
-      state.cuisine = value; 
+      console.log('Navbar - selectCuisine llamado:', { value, currentCuisine: state.cuisine });
+      state.cuisine = value;
+      console.log('Navbar - Estado después de actualizar:', { newCuisine: state.cuisine }); 
       state.openField = null; 
       state.showCuisineSuggestions = false;
+      state.expanded = false; // Cerrar el formulario expandido
       
       // Mostrar feedback
       state.showFeedback = true;
       state.feedbackMessage = `Tipo de comida seleccionado: ${value}`;
       
-      
+      // Redirigir automáticamente a restaurantes con el filtro aplicado después de un pequeño delay
+      setTimeout(() => {
+        const params = new URLSearchParams();
+        if (state.query) params.append('q', state.query);
+        if (state.location) params.append('loc', state.location);
+        if (value) params.append('cuisine', value);
+        if (state.date) params.append('date', state.date);
+        if (state.time) params.append('time', state.time);
+        if (state.partySize) params.append('partySize', state.partySize);
+        
+        const queryString = params.toString();
+        const url = queryString ? `#/restaurants?${queryString}` : '#/restaurants';
+        
+        console.log('Navbar - Redirigiendo con filtros:', {
+          cuisine: value,
+          query: state.query,
+          location: state.location,
+          url: url
+        });
+        
+        window.location.hash = url;
+      }, 100);
       
       // Cerrar feedback después de 2 segundos
       setTimeout(() => {
         state.showFeedback = false;
-
       }, 2000);
     },
     clearQuery: () => { 
@@ -496,9 +563,6 @@ const Navbar = () => {
 
   };
 
-  // Cargar restaurantes al inicializar
-  setTimeout(() => actions.loadRestaurants(), 100);
-
   const view = () => {
     const dropdownTop = 'top-20';
     // Datos del calendario ligero
@@ -587,7 +651,8 @@ const Navbar = () => {
                     value="${state.location}"
                     data-oninput="updateLocation"
                     data-onfocus="openSearch"
-                    class="w-full h-full pl-12 pr-4 text-sm border-0 outline-none bg-transparent placeholder-neutral-400 focus:placeholder-neutral-300"
+                    data-onclick="toggleLocation"
+                    class="w-full h-full pl-12 pr-4 text-sm border-0 outline-none bg-transparent placeholder-neutral-400 focus:placeholder-neutral-300 cursor-pointer"
                   />
                   ${state.location ? `<button type="button" aria-label="Limpiar" class="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200" data-onclick="clearLocation"><i class="fa-solid fa-xmark"></i></button>` : ''}
                 </div>
@@ -618,7 +683,8 @@ const Navbar = () => {
                     value="${state.cuisine}"
                     data-oninput="updateCuisine"
                     data-onfocus="openSearch"
-                    class="w-full h-full pl-12 pr-4 text-sm border-0 outline-none bg-transparent placeholder-neutral-400 focus:placeholder-neutral-300"
+                    data-onclick="toggleCuisine"
+                    class="w-full h-full pl-12 pr-4 text-sm border-0 outline-none bg-transparent placeholder-neutral-400 focus:placeholder-neutral-300 cursor-pointer"
                   />
                   ${state.cuisine ? `<button type="button" aria-label="Limpiar" class="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded-full text-neutral-400 hover:bg-neutral-100 transition-colors duration-200" data-onclick="clearCuisine"><i class="fa-solid fa-xmark"></i></button>` : ''}
                 </div>
@@ -715,7 +781,36 @@ const Navbar = () => {
   `;
   };
 
-  return { state, actions, view };
+  const onRender = () => {
+    // Agregar event listener para cerrar dropdowns al hacer clic fuera
+    const handleClickOutside = (e) => {
+      const form = document.querySelector('form[data-onsubmit="submitSearch"]');
+      if (form && !form.contains(e.target)) {
+        actions.closeSearchDropdowns();
+      }
+    };
+
+    // Remover listener anterior si existe
+    document.removeEventListener('click', handleClickOutside);
+    // Agregar nuevo listener
+    document.addEventListener('click', handleClickOutside);
+  };
+
+  // Cargar restaurantes solo una vez
+  if (!state.initialized) {
+    setTimeout(() => {
+      try {
+        actions.loadRestaurants();
+      } catch (error) {
+        console.error('Error inicializando navbar:', error);
+      }
+    }, 100);
+    state.initialized = true;
+  }
+
+  console.log('Navbar inicializado con acciones:', Object.keys(actions));
+  
+  return { state, actions, view, onRender };
 };
 
 export default Navbar;
