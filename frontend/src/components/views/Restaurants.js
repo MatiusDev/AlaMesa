@@ -14,8 +14,8 @@ const Restaurants = () => {
     selectedRating: '',
     showFilters: false,
     showSearchSuggestions: false,
-    // Obtener parámetros de la URL
-    urlParams: (() => {
+    // Función para obtener parámetros de la URL dinámicamente
+    getUrlParams: () => {
       const hash = window.location.hash || '#/restaurants';
       const [, queryString = ''] = hash.split('?');
       const params = new URLSearchParams(queryString);
@@ -26,10 +26,11 @@ const Restaurants = () => {
         date: params.get('date') || '',
         time: params.get('time') || '',
         partySize: params.get('partySize') || '',
-        restaurant: params.get('restaurant') || '' // Nuevo parámetro para restaurante específico
+        restaurant: params.get('restaurant') || ''
       };
-    })(),
-    selectedRestaurant: null // Para mostrar detalles de un restaurante específico
+    },
+    selectedRestaurant: null, // Para mostrar detalles de un restaurante específico
+    lastHash: '' // Para detectar cambios en la URL
   };
 
   const actions = {
@@ -40,19 +41,12 @@ const Restaurants = () => {
         state.error = null;
         const data = await getRestaurants();
         state.restaurants = data || [];
-        state.filteredRestaurants = [...state.restaurants];
         
-        // Si hay un restaurante específico seleccionado, encontrarlo
-        if (state.urlParams.restaurant) {
-          const selected = state.restaurants.find(r => 
-            r.restaurant_id === state.urlParams.restaurant || r.id === state.urlParams.restaurant
-          );
-          if (selected) {
-            state.selectedRestaurant = selected;
-            // Filtrar para mostrar solo este restaurante
-            state.filteredRestaurants = [selected];
-          }
-        }
+        // Obtener parámetros de la URL dinámicamente
+        const urlParams = state.getUrlParams();
+        
+        // Aplicar filtros desde la URL
+        actions.applyFiltersFromUrl(urlParams);
         
         state.loading = false;
       } catch (error) {
@@ -62,12 +56,47 @@ const Restaurants = () => {
       }
     },
 
+    // Aplicar filtros desde los parámetros de la URL
+    applyFiltersFromUrl: (urlParams) => {
+      console.log('Aplicando filtros desde URL:', urlParams);
+      
+      // Actualizar el estado con los parámetros de la URL
+      state.searchQuery = urlParams.q || '';
+      state.selectedLocation = urlParams.loc || '';
+      state.selectedCuisine = urlParams.cuisine || '';
+      
+      console.log('Estado actualizado:', {
+        searchQuery: state.searchQuery,
+        selectedLocation: state.selectedLocation,
+        selectedCuisine: state.selectedCuisine
+      });
+      
+      // Si hay un restaurante específico seleccionado, encontrarlo
+      if (urlParams.restaurant) {
+        const selected = state.restaurants.find(r => 
+          r.restaurant_id === urlParams.restaurant || r.id === urlParams.restaurant
+        );
+        if (selected) {
+          state.selectedRestaurant = selected;
+          state.filteredRestaurants = [selected];
+          console.log('Restaurante específico encontrado:', selected.name);
+          return;
+        }
+      }
+      
+      // Aplicar filtros normales
+      actions.applyFilters();
+      console.log('Filtros aplicados, restaurantes filtrados:', state.filteredRestaurants.length);
+    },
+
     // Aplicar filtros
     applyFilters: () => {
       let filtered = [...state.restaurants];
+      console.log('Aplicando filtros a', state.restaurants.length, 'restaurantes');
 
       // Filtro por búsqueda de texto
       if (state.searchQuery) {
+        const beforeCount = filtered.length;
         filtered = filtered.filter(restaurant => 
           restaurant.name?.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
           restaurant.restaurant_type?.some(type => 
@@ -75,35 +104,44 @@ const Restaurants = () => {
           ) ||
           restaurant.city?.toLowerCase().includes(state.searchQuery.toLowerCase())
         );
+        console.log(`Filtro por texto "${state.searchQuery}": ${beforeCount} → ${filtered.length}`);
       }
 
       // Filtro por ubicación
       if (state.selectedLocation) {
+        const beforeCount = filtered.length;
         filtered = filtered.filter(restaurant => 
           restaurant.city === state.selectedLocation
         );
+        console.log(`Filtro por ubicación "${state.selectedLocation}": ${beforeCount} → ${filtered.length}`);
       }
 
       // Filtro por tipo de cocina
       if (state.selectedCuisine) {
+        const beforeCount = filtered.length;
         filtered = filtered.filter(restaurant => 
           restaurant.restaurant_type?.some(type => type === state.selectedCuisine)
         );
+        console.log(`Filtro por cocina "${state.selectedCuisine}": ${beforeCount} → ${filtered.length}`);
       }
 
       // Filtro por precio
       if (state.selectedPrice) {
+        const beforeCount = filtered.length;
         filtered = filtered.filter(restaurant => 
           restaurant.price_range === state.selectedPrice
         );
+        console.log(`Filtro por precio "${state.selectedPrice}": ${beforeCount} → ${filtered.length}`);
       }
 
       // Filtro por rating
       if (state.selectedRating) {
+        const beforeCount = filtered.length;
         const minRating = parseFloat(state.selectedRating);
         filtered = filtered.filter(restaurant => 
           (restaurant.rating || 0) >= minRating
         );
+        console.log(`Filtro por rating "${state.selectedRating}": ${beforeCount} → ${filtered.length}`);
       }
 
       state.filteredRestaurants = filtered;
@@ -125,25 +163,29 @@ const Restaurants = () => {
     },
 
     // Seleccionar ubicación
-    selectLocation: (location) => {
+    selectLocation: (e) => {
+      const location = e.currentTarget.dataset.location;
       state.selectedLocation = state.selectedLocation === location ? '' : location;
       actions.applyFilters();
     },
 
     // Seleccionar tipo de cocina
-    selectCuisine: (cuisine) => {
+    selectCuisine: (e) => {
+      const cuisine = e.currentTarget.dataset.cuisine;
       state.selectedCuisine = state.selectedCuisine === cuisine ? '' : cuisine;
       actions.applyFilters();
     },
 
     // Seleccionar rango de precio
-    selectPrice: (price) => {
+    selectPrice: (e) => {
+      const price = e.currentTarget.dataset.price;
       state.selectedPrice = state.selectedPrice === price ? '' : price;
       actions.applyFilters();
     },
 
     // Seleccionar rating mínimo
-    selectRating: (rating) => {
+    selectRating: (e) => {
+      const rating = e.currentTarget.dataset.rating;
       state.selectedRating = state.selectedRating === rating ? '' : rating;
       actions.applyFilters();
     },
@@ -260,8 +302,22 @@ const Restaurants = () => {
     actions.loadRestaurants();
   };
 
+  const onRender = () => {
+    // Verificar si los parámetros de la URL han cambiado
+    const currentUrlParams = state.getUrlParams();
+    const currentHash = window.location.hash || '#/restaurants';
+    
+    // Si la URL ha cambiado, aplicar los nuevos filtros
+    if (currentHash !== state.lastHash) {
+      state.lastHash = currentHash;
+      console.log('URL cambió, aplicando nuevos filtros:', currentUrlParams);
+      actions.applyFiltersFromUrl(currentUrlParams);
+    }
+  };
+
   const view = () => {
-    const { q, loc, cuisine, date, time, partySize } = state.urlParams;
+    const urlParams = state.getUrlParams();
+    const { q, loc, cuisine, date, time, partySize } = urlParams;
     
     // Chips de filtros activos desde la URL
     const urlChips = [
@@ -504,7 +560,7 @@ const Restaurants = () => {
     `;
   };
 
-  return { state, actions, view, onInit };
+  return { state, actions, view, onInit, onRender };
 };
 
 export default Restaurants;
