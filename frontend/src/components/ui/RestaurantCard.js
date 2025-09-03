@@ -34,16 +34,16 @@ const RestaurantCard = (restaurant) => {
   };
 
   return `
-    <article class="group overflow-hidden rounded-[var(--am-radius)] border border-neutral-200 bg-white shadow-soft hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+    <article class="group overflow-hidden rounded-[var(--am-radius)] border border-neutral-200/60 bg-white shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:border-am-300/60">
       <!-- Imagen del restaurante -->
       <div class="relative aspect-[4/3] overflow-hidden">
         <img 
           src="${state.img}" 
           alt="${restaurant.name}" 
-          class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+          class="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
           loading="lazy"
         />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent group-hover:from-black/60 transition-all duration-500"></div>
         
         <!-- Badge de precio -->
         <div class="absolute top-3 right-3 text-xs rounded-full px-3 py-1 bg-white/90 text-neutral-800 font-medium shadow-sm">
@@ -101,9 +101,12 @@ const RestaurantCard = (restaurant) => {
           <button 
             data-onclick="viewRestaurantDetails" 
             data-restaurant-id="${restaurant.restaurant_id || restaurant.id || ''}"
-            class="w-full bg-am-600 hover:bg-am-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200 group-hover:shadow-md"
+            class="w-full bg-gradient-to-r from-am-600 to-am-700 hover:from-am-700 hover:to-am-800 text-white py-2.5 px-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl group-hover:shadow-2xl"
           >
-            Ver detalles
+            <span class="flex items-center justify-center gap-2">
+              Ver detalles
+              <i class="fa-solid fa-arrow-right text-sm transition-transform duration-300 group-hover:translate-x-1"></i>
+            </span>
           </button>
         </div>
       </div>
