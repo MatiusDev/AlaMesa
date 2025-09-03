@@ -252,6 +252,9 @@ web_modules/
 # Mac files
 .DS_Store
 
+# Frontend
+/frontend/**/temp/
+
 # Vite
 /frontend/dist
 /frontend/dist-ssr
