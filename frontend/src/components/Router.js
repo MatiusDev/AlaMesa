@@ -35,7 +35,11 @@ const Router = () => {
     actions: {
       navigate: () => {
         const oldPath = component.state.currentPath.split('?')[0];
+        const newPath = window.location.hash || '#/';
+        const newBasePath = newPath.split('?')[0];
+        
         const oldViewInstance = viewInstances[oldPath] || notFoundInstance;
+        const newViewInstance = viewInstances[newBasePath] || notFoundInstance;
 
         // Si el componente que estamos dejando tiene una función de limpieza, la ejecutamos
         // y reiniciamos su estado de inicialización para que `onInit` se vuelva a llamar.
@@ -46,8 +50,19 @@ const Router = () => {
           oldViewInstance._initialized = false;
         }
 
+        // Si es el mismo componente pero con diferentes parámetros, también reinicializamos
+        if (oldViewInstance === newViewInstance && oldPath !== newBasePath) {
+          console.log('Mismo componente, diferentes parámetros, reinicializando...', {
+            oldPath,
+            newBasePath,
+            oldFullPath: component.state.currentPath,
+            newFullPath: newPath
+          });
+          newViewInstance._initialized = false;
+        }
+
         // Actualiza la ruta, lo que dispara el re-renderizado reactivo.
-        component.state.currentPath = window.location.hash || '#/';
+        component.state.currentPath = newPath;
       },
     },
 
@@ -55,7 +70,27 @@ const Router = () => {
     view: () => {
       // Extraer la ruta base sin parámetros de query
       const basePath = component.state.currentPath.split('?')[0];
-      const activeViewInstance = viewInstances[basePath] || notFoundInstance;
+      
+      // Función para encontrar la vista correcta, incluyendo rutas dinámicas
+      const findViewInstance = (path) => {
+        // Primero intentar coincidencia exacta
+        if (viewInstances[path]) {
+          return viewInstances[path];
+        }
+        
+        // Luego intentar coincidencia dinámica para rutas como /restaurant/123
+        const pathSegments = path.split('/');
+        if (pathSegments.length >= 2) {
+          const baseRoute = `#/${pathSegments[1]}`;
+          if (viewInstances[baseRoute]) {
+            return viewInstances[baseRoute];
+          }
+        }
+        
+        return notFoundInstance;
+      };
+      
+      const activeViewInstance = findViewInstance(basePath);
 
       // Llama al ciclo de vida onInit de la vista activa si existe y no se ha ejecutado antes.
       if (activeViewInstance.onInit && !activeViewInstance._initialized) {
