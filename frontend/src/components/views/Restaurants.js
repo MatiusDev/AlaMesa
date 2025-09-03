@@ -171,6 +171,16 @@ const Restaurants = () => {
       window.location.hash = '#/restaurants';
     },
 
+    // Ver detalles de un restaurante específico
+    viewRestaurantDetails: (e) => {
+      const restaurantId = e.currentTarget.dataset.restaurantId;
+      if (restaurantId) {
+        window.location.hash = `#/restaurant/${restaurantId}`;
+      } else {
+        window.location.hash = '#/restaurants';
+      }
+    },
+
     // Mostrar sugerencias de búsqueda
     showSearchSuggestions: () => {
       if (state.searchQuery) {

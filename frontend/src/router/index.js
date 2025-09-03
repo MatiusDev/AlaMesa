@@ -2,6 +2,7 @@
 import Home from '@views/Home.js';
 import Restaurants from '@views/Restaurants.js';
 import Auth from '@views/Auth.js';
+import RestaurantDetail from '@views/RestaurantDetail.js';
 
 /**
  * @description
@@ -11,5 +12,6 @@ import Auth from '@views/Auth.js';
 export default {
   '#/': Home,
   '#/restaurants': Restaurants,
+  '#/restaurant': RestaurantDetail,
   '#/auth': Auth,
 };
