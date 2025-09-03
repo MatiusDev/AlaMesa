@@ -87,10 +87,10 @@ const Footer = () => {
                   ${state.socialLinks.map(social => `
                     <button 
                       onclick="window.open('${social.url}', '_blank', 'noopener,noreferrer')"
-                      class="w-9 h-9 bg-am-500 hover:bg-am-600 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-soft"
+                      class="w-9 h-9 bg-gradient-to-br from-am-500 to-am-700 hover:from-am-600 hover:to-am-800 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-lg hover:shadow-xl group"
                       title="${social.name}"
                     >
-                      <i class="${social.icon} text-white text-sm"></i>
+                      <i class="${social.icon} text-white text-sm transition-transform duration-300 group-hover:scale-110"></i>
                     </button>
                   `).join('')}
                 </div>
@@ -108,7 +108,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/register-restaurant'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Registrar Restaurante
                       </button>
@@ -116,7 +116,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/dashboard'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Panel de Control
                       </button>
@@ -124,7 +124,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/analytics'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Estadísticas
                       </button>
@@ -132,7 +132,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/support'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Soporte
                       </button>
@@ -148,7 +148,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/restaurants'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Buscar Restaurantes
                       </button>
@@ -156,7 +156,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/my-bookings'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Mis Reservas
                       </button>
@@ -164,7 +164,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/favorites'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Favoritos
                       </button>
@@ -172,7 +172,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/history'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Historial
                       </button>
@@ -188,7 +188,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/about'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Sobre Nosotros
                       </button>
@@ -196,7 +196,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/team'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Nuestro Equipo
                       </button>
@@ -204,7 +204,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/careers'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Carreras
                       </button>
@@ -212,7 +212,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/press'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Prensa
                       </button>
@@ -228,7 +228,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/help'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Centro de Ayuda
                       </button>
@@ -236,7 +236,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/contact'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Contacto
                       </button>
@@ -244,7 +244,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/report-issue'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         Reportar Problema
                       </button>
@@ -252,7 +252,7 @@ const Footer = () => {
                     <li>
                       <button 
                         onclick="window.location.hash = '#/faq'"
-                        class="text-gray-600 hover:text-am-600 transition-colors duration-300 text-sm hover:underline"
+                        class="text-gray-600 hover:text-am-600 transition-all duration-300 text-sm hover:underline transform hover:translate-x-1"
                       >
                         FAQ
                       </button>
@@ -295,7 +295,7 @@ const Footer = () => {
               <div class="flex items-center space-x-4">
                 <button 
                   onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-                  class="w-9 h-9 bg-am-500 hover:bg-am-600 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-soft"
+                  class="w-9 h-9 bg-gradient-to-br from-am-500 to-am-700 hover:from-am-600 hover:to-am-800 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-lg hover:shadow-xl group"
                   title="Volver arriba"
                 >
                   <i class="fas fa-arrow-up text-white text-sm"></i>

@@ -2,15 +2,41 @@ import { getData, sendData, updateData, deleteData } from "@api";
 
 const ENDPOINT = 'restaurants';
 
+// --- Implementación de Caché para Restaurantes ---
+let restaurantCache = null;
+let ongoingRequest = null;
+
 const getRestaurants = async () => {
-    try {
-        const data = await getData(ENDPOINT);
-        console.log('Restaurantes cargados:', data);
-        return data;
-    } catch (error) {
-        console.error('Error fetching restaurants:', error);
-        throw new Error('No se pudieron cargar los restaurantes. Verifica tu conexión.');
+    // 1. Si la caché ya tiene datos, devolverlos inmediatamente.
+    if (restaurantCache) {
+        console.log('Restaurantes devueltos desde CACHÉ.');
+        return Promise.resolve(restaurantCache);
     }
+
+    // 2. Si hay una petición en curso, no iniciar una nueva.
+    // En su lugar, devolver la promesa de la petición existente.
+    if (ongoingRequest) {
+        console.log('Esperando por una petición de restaurantes ya en curso...');
+        return ongoingRequest;
+    }
+
+    // 3. Si no hay caché ni petición en curso, iniciar una nueva.
+    console.log('Realizando petición a la API para obtener restaurantes (solo ocurrirá una vez).');
+    ongoingRequest = new Promise(async (resolve, reject) => {
+        try {
+            const data = await getData(ENDPOINT);
+            console.log('Restaurantes cargados desde la API y guardados en caché:', data);
+            restaurantCache = data; // Guardar en caché para futuras peticiones.
+            ongoingRequest = null; // Limpiar la promesa en curso.
+            resolve(restaurantCache);
+        } catch (error) {
+            console.error('Error fetching restaurants:', error);
+            ongoingRequest = null; // Limpiar también en caso de error.
+            reject(new Error('No se pudieron cargar los restaurantes. Verifica tu conexión.'));
+        }
+    });
+
+    return ongoingRequest;
 };
 
 const getRestaurantById = async (id) => {
