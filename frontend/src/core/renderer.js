@@ -1,4 +1,4 @@
-// frontend/src/core/renderer.js
+import { updateDOM } from '@core/dom-diff.js';
 
 /**
  * @function createRoot
@@ -11,6 +11,9 @@ export const createRoot = (container) => {
     throw new Error('createRoot requiere un elemento contenedor válido.');
   }
 
+  // Flag para controlar el primer renderizado.
+  let isFirstRender = true;
+
   return {
     /**
      * @method render
@@ -20,27 +23,17 @@ export const createRoot = (container) => {
     render(RootComponentFactory) {
       let _render;
 
-      /**
-       * @function makeStateReactive
-       * @description Modifica un objeto de estado "in-place" para hacerlo reactivo,
-       *              respetando las clausuras (closures) de JavaScript.
-       * @param {object} state - El objeto de estado original del componente.
-       * @param {Function} renderCallback - La función a llamar cuando el estado cambia.
-       */
       const makeStateReactive = (state, renderCallback) => {
-        // Itera sobre cada propiedad del objeto de estado original.
         Object.keys(state).forEach(key => {
-          let internalValue = state[key]; // Guarda el valor inicial en una clausura.
-
-          // Reemplaza la propiedad original con un getter y un setter.
+          let internalValue = state[key];
           Object.defineProperty(state, key, {
             get() {
               return internalValue;
             },
             set(newValue) {
               if (internalValue !== newValue) {
-                internalValue = newValue; // Actualiza el valor.
-                renderCallback(); // Dispara el re-renderizado.
+                internalValue = newValue;
+                renderCallback();
               }
             },
             enumerable: true,
@@ -54,11 +47,47 @@ export const createRoot = (container) => {
       const children = rootInstance.children || [];
       const allComponents = [rootInstance, ...children];
 
-      _render = () => {
-        container.innerHTML = view();
-        bindEvents();
+      const allActions = {};
+      allComponents.forEach(component => {
+        if (component.actions) {
+            Object.assign(allActions, component.actions);
+        }
+      });
 
-        // Llama al ciclo de vida onRender de todos los componentes después de pintar el DOM.
+      const bindEvents = (targetNode) => {
+        const eventTypes = ['click', 'submit', 'change', 'keyup', 'keydown', 'input', 'focus', 'blur'];
+        eventTypes.forEach(eventType => {
+          targetNode.querySelectorAll(`[data-on${eventType}]`).forEach(element => {
+            const actionName = element.dataset[`on${eventType}`];
+            const action = allActions[actionName];
+            
+            const listenerKey = `_listener_${eventType}`;
+
+            if (action) {
+              // Si ya hay un listener del mismo tipo, lo removemos antes de añadir el nuevo
+              // para evitar duplicados en re-renders parciales.
+              if (element[listenerKey]) {
+                element.removeEventListener(eventType, element[listenerKey]);
+              }
+              element[listenerKey] = (event) => action(event);
+              element.addEventListener(eventType, element[listenerKey]);
+            }
+          });
+        });
+      };
+
+      _render = () => {
+        const newHtml = view();
+
+        if (isFirstRender) {
+          container.innerHTML = newHtml;
+          isFirstRender = false;
+        } else {
+          updateDOM(container, newHtml);
+        }
+
+        bindEvents(container);
+
         allComponents.forEach(component => {
           if (component.onRender) {
             component.onRender();
@@ -66,34 +95,11 @@ export const createRoot = (container) => {
         });
       };
 
-      // Hace reactivo el estado de todos los componentes, modificando el objeto original.
       allComponents.forEach(component => {
         if (component.state) {
           makeStateReactive(component.state, _render);
         }
       });
-
-      const allActions = {};
-      allComponents.forEach(component => {
-        Object.assign(allActions, component.actions);
-      });
-
-      const bindEvents = () => {
-        const eventTypes = ['onclick', 'onsubmit', 'onchange', 'onkeyup'];
-        eventTypes.forEach(eventType => {
-          const attribute = `data-${eventType}`;
-          const elements = container.querySelectorAll(`[${attribute}]`);
-          elements.forEach(element => {
-            const actionName = element.getAttribute(attribute);
-            const action = allActions[actionName];
-            if (action) {
-              element.removeEventListener(eventType.substring(2), element._listener);
-              element._listener = (event) => action(event);
-              element.addEventListener(eventType.substring(2), element._listener);
-            }
-          });
-        });
-      };
 
       _render();
     },
