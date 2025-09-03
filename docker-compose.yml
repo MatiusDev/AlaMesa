@@ -63,11 +63,7 @@ services:
       retries: 5
   
   frontend:
-    build:
-      context: ./frontend
-      args:
-        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
-        - VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY}
+    build: ./frontend
     ports:
       - "3000:80" # Se usa el puerto 3000 para desarrollo
     volumes:

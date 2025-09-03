@@ -36,10 +36,14 @@ const Navbar = () => {
     showLocationSuggestions: false,
     showCuisineSuggestions: false,
     searchTimeout: null,
+    initialized: false, // Flag para controlar la carga inicial
   };
 
-  // Cargar restaurantes al inicializar
-  setTimeout(() => actions.loadRestaurants(), 100);
+  // Cargar restaurantes solo una vez
+  if (!state.initialized) {
+    setTimeout(() => actions.loadRestaurants(), 100);
+    state.initialized = true;
+  }
 
   const actions = {
     // Funciones de actualización mejoradas con autocompletado
@@ -63,6 +67,9 @@ const Navbar = () => {
     
     // Cargar restaurantes desde la API
     loadRestaurants: async () => {
+      // Si ya hay restaurantes, no volver a cargar
+      if (state.restaurants.length > 0) return;
+
       try {
         const data = await getRestaurants();
         state.restaurants = data || [];
@@ -688,8 +695,18 @@ const Navbar = () => {
         </form>
 
         <div class="flex items-center gap-2">
-          <button class="hidden sm:inline rounded-full border border-neutral-300 px-4 py-1.5 text-sm hover:border-neutral-400" data-onclick="gotoAuth">Inicia sesión</button>
-          <button class="rounded-full bg-am-600 hover:bg-am-700 text-white px-4 py-1.5 text-sm" data-onclick="gotoAuth">Regístrate</button>
+          <button class="hidden sm:inline rounded-full border border-neutral-300/60 bg-white/80 backdrop-blur-sm px-4 py-1.5 text-sm text-neutral-700 hover:border-am-300/80 hover:bg-am-50/80 hover:text-am-700 transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md" data-onclick="gotoAuth">
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-sign-in-alt text-xs"></i>
+              Inicia sesión
+            </span>
+          </button>
+          <button class="rounded-full bg-gradient-to-r from-am-600 to-am-700 hover:from-am-700 hover:to-am-800 text-white px-4 py-1.5 text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95" data-onclick="gotoAuth">
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-user-plus text-xs"></i>
+              Regístrate
+            </span>
+          </button>
         </div>
       </div>
 
@@ -698,11 +715,10 @@ const Navbar = () => {
   `;
   };
 
-  // Cargar restaurantes al inicializar
-  setTimeout(() => actions.loadRestaurants(), 100);
-
   return { state, actions, view };
-};export default Navbar;
+};
+
+export default Navbar;
 
 
 

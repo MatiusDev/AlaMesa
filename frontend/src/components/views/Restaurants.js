@@ -246,8 +246,9 @@ const Restaurants = () => {
     }
   };
 
-  // Cargar restaurantes al inicializar
-  setTimeout(() => actions.loadRestaurants(), 100);
+  const onInit = () => {
+    actions.loadRestaurants();
+  };
 
   const view = () => {
     const { q, loc, cuisine, date, time, partySize } = state.urlParams;
@@ -493,7 +494,7 @@ const Restaurants = () => {
     `;
   };
 
-  return { state, actions, view };
+  return { state, actions, view, onInit };
 };
 
 export default Restaurants;
